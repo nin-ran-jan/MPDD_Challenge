@@ -1,0 +1,137 @@
+Extracting features for training...
+Extracted features (aggregated): Audio shape=(296, 512), Video shape=(296, 709), Pers shape=(296, 1024), Labels shape=(296,)
+
+Extracting features for validation...
+Extracted features (aggregated): Audio shape=(41, 512), Video shape=(41, 709), Pers shape=(41, 1024), Labels shape=(41,)
+
+--- Training SVM for Audio ---
+Running GridSearchCV for Audio...
+Fitting 5 folds for each of 32 candidates, totalling 160 fits
+Best parameters for Audio: {'C': 100, 'gamma': 'scale', 'kernel': 'rbf', 'probability': True}
+Best cross-validation accuracy for Audio: 0.8310
+
+--- Training SVM for Video ---
+Running GridSearchCV for Video...
+Fitting 5 folds for each of 32 candidates, totalling 160 fits
+Best parameters for Video: {'C': 10, 'gamma': 'scale', 'kernel': 'rbf', 'probability': True}
+Best cross-validation accuracy for Video: 0.9156
+
+--- Training SVM for Personalized ---
+Running GridSearchCV for Personalized...
+Fitting 5 folds for each of 32 candidates, totalling 160 fits
+Best parameters for Personalized: {'C': 1, 'gamma': 0.1, 'kernel': 'rbf', 'probability': True}
+Best cross-validation accuracy for Personalized: 0.9932
+
+--- Evaluating Fusion Model on Validation Set ---
+Validation Accuracy (Fused): 0.8049
+Validation Classification Report (Fused):
+              precision    recall  f1-score   support
+
+           0       0.82      0.97      0.89        33
+           1       0.50      0.12      0.20         8
+
+    accuracy                           0.80        41
+   macro avg       0.66      0.55      0.54        41
+weighted avg       0.76      0.80      0.75        41
+
+
+--- Evaluating Individual Modalities on Validation Set ---
+Validation Accuracy (Audio Only): 0.6098
+Validation Accuracy (Video Only): 0.8049
+Validation Accuracy (Personalized Only): 0.8293
+.venvkaushaldamania@Mac MPDD-revamp % python run_late_svm.py
+Creating Training Dataset...
+Creating Validation Dataset...
+
+Extracting features for training...
+Extracted features (aggregated): Audio shape=(292, 512), Video shape=(292, 709), Pers shape=(292, 1024), Labels shape=(292,)
+
+Extracting features for validation...
+Extracted features (aggregated): Audio shape=(45, 512), Video shape=(45, 709), Pers shape=(45, 1024), Labels shape=(45,)
+
+--- Training SVM for Audio ---
+Running GridSearchCV for Audio...
+Fitting 5 folds for each of 32 candidates, totalling 160 fits
+Best parameters for Audio: {'C': 100, 'gamma': 'scale', 'kernel': 'rbf', 'probability': True}
+Best cross-validation accuracy for Audio: 0.8459
+
+--- Training SVM for Video ---
+Running GridSearchCV for Video...
+Fitting 5 folds for each of 32 candidates, totalling 160 fits
+Best parameters for Video: {'C': 100, 'gamma': 'scale', 'kernel': 'rbf', 'probability': True}
+Best cross-validation accuracy for Video: 0.9417
+
+--- Training SVM for Personalized ---
+Running GridSearchCV for Personalized...
+Fitting 5 folds for each of 32 candidates, totalling 160 fits
+Best parameters for Personalized: {'C': 1, 'gamma': 0.1, 'kernel': 'rbf', 'probability': True}
+Best cross-validation accuracy for Personalized: 1.0000
+
+--- Evaluating Fusion Model on Validation Set ---
+Validation Accuracy (Fused): 0.6444
+Validation Classification Report (Fused):
+              precision    recall  f1-score   support
+
+           0       0.64      1.00      0.78        28
+           1       1.00      0.06      0.11        17
+
+    accuracy                           0.64        45
+   macro avg       0.82      0.53      0.44        45
+weighted avg       0.77      0.64      0.53        45
+
+
+--- Evaluating Individual Modalities on Validation Set ---
+Validation Accuracy (Audio Only): 0.5778
+Validation Accuracy (Video Only): 0.6889
+Validation Accuracy (Personalized Only): 0.6444
+
+--- Audio Model ---
+Scaler:
+  - Input Features: 512
+  - Total parameters (means + scales): 1024
+SVM (SVC):
+  - Kernel: rbf
+  - C: 100
+  - Gamma: scale
+  - Number of classes: 2
+  - Support vectors per class: [129  60]
+  - Total support vectors: 189
+  - Support Vectors array shape: (189, 512)
+  - Dual Coefficients array shape: (1, 189)
+  - Intercepts array shape: (1,)
+  - Total stored elements (SVs + Dual Coefs + Intercepts): 96958
+
+--- Video Model ---
+Scaler:
+  - Input Features: 709
+  - Total parameters (means + scales): 1418
+SVM (SVC):
+  - Kernel: rbf
+  - C: 100
+  - Gamma: scale
+  - Number of classes: 2
+  - Support vectors per class: [94 47]
+  - Total support vectors: 141
+  - Support Vectors array shape: (141, 709)
+  - Dual Coefficients array shape: (1, 141)
+  - Intercepts array shape: (1,)
+  - Total stored elements (SVs + Dual Coefs + Intercepts): 100111
+
+--- Personalized Model ---
+Scaler:
+  - Input Features: 1024
+  - Total parameters (means + scales): 2048
+SVM (SVC):
+  - Kernel: rbf
+  - C: 1
+  - Gamma: 0.1
+  - Number of classes: 2
+  - Support vectors per class: [60 34]
+  - Total support vectors: 94
+  - Support Vectors array shape: (94, 1024)
+  - Dual Coefficients array shape: (1, 94)
+  - Intercepts array shape: (1,)
+  - Total stored elements (SVs + Dual Coefs + Intercepts): 96351
+
+--- Overall Model Complexity ---
+Total stored elements across all scalers and SVMs: 297910

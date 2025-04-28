@@ -1,0 +1,49 @@
+graph TD
+    subgraph Input Features
+        A["Audio Features (2D Aggregated)"];
+        V["Video Features (2D Aggregated)"];
+        P["Personalized Features (2D Aggregated)"];
+    end
+
+    subgraph Preprocessing
+        ScaA(StandardScaler Audio);
+        ScaV(StandardScaler Video);
+        ScaP(StandardScaler Pers);
+    end
+
+    subgraph SVM Models
+        SVMA["Audio SVM (SVC, RBF)"];
+        SVMV["Video SVM (SVC, RBF)"];
+        SVMP["Pers SVM (SVC, RBF)"];
+    end
+
+    subgraph Fusion Logic
+        F(Average Probabilities);
+    end
+
+    subgraph Output
+        O(Final Prediction);
+    end
+
+    A --> ScaA;
+    V --> ScaV;
+    P --> ScaP;
+
+    ScaA --> SVMA;
+    ScaV --> SVMV;
+    ScaP --> SVMP;
+
+    SVMA -->|Probs_A| F;
+    SVMV -->|Probs_V| F;
+    SVMP -->|Probs_P| F;
+
+    F --> O;
+
+    %% Optional Styling
+    style ScaA fill:#f9f,stroke:#333,stroke-width:2px;
+    style ScaV fill:#f9f,stroke:#333,stroke-width:2px;
+    style ScaP fill:#f9f,stroke:#333,stroke-width:2px;
+    style SVMA fill:#ccf,stroke:#333,stroke-width:2px;
+    style SVMV fill:#ccf,stroke:#333,stroke-width:2px;
+    style SVMP fill:#ccf,stroke:#333,stroke-width:2px;
+    style F fill:#9cf,stroke:#333,stroke-width:2px;
