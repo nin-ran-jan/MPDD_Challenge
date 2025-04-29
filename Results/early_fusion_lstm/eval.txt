@@ -1,0 +1,39 @@
+Using CUDA: NVIDIA L4
+Splitting data...
+Data split: Train=293, Val=44
+Determining feature dimensions...
+  Audio Dim: 512
+  Video Dim: 709
+Final Dims: A=512, V=709, P=1024, Cls=2
+Creating Datasets...
+
+--- Evaluating Best Saved Model ---
+Final Best Model Val Acc: 0.7727
+Classification Report:
+{
+  "0": {
+    "precision": 0.7619047619047619,
+    "recall": 1.0,
+    "f1-score": 0.8648648648648649,
+    "support": 32.0
+  },
+  "1": {
+    "precision": 1.0,
+    "recall": 0.16666666666666666,
+    "f1-score": 0.2857142857142857,
+    "support": 12.0
+  },
+  "accuracy": 0.7727272727272727,
+  "macro avg": {
+    "precision": 0.8809523809523809,
+    "recall": 0.5833333333333334,
+    "f1-score": 0.5752895752895753,
+    "support": 44.0
+  },
+  "weighted avg": {
+    "precision": 0.8268398268398268,
+    "recall": 0.7727272727272727,
+    "f1-score": 0.7069147069147069,
+    "support": 44.0
+  }
+}

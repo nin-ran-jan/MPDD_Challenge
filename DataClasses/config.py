@@ -1,5 +1,3 @@
-
-
 from dataclasses import dataclass
 import json
 from typing import Optional
@@ -30,6 +28,10 @@ class Config:
     video_dim: Optional[int] = None # Will be inferred
     pers_dim: Optional[int] = None  # Will be inferred
     num_classes: Optional[int] = None # Will be set from labelcount
+
+    # For Early LSTM
+    gamma: float = 2.0
+    alpha: float = 0.25
 
     @staticmethod
     def from_json(json_file_path: str) -> 'Config':

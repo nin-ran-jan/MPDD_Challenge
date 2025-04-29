@@ -1,5 +1,6 @@
 {
-    "data_root_path": "/Users/kaushaldamania/deepl/MPDD-Elderly",
+    "data_root_path": "/home/ns3888/MPDD-2025/MPDD-Elderly",
+    "model_save_path": "/home/ns3888/MPDD-challege/best_early_fusion_lstm.pth",
     "window_split_time": 1, 
     "audio_feature_method" : "wav2vec", 
     "video_feature_method" : "openface",
@@ -9,5 +10,7 @@
     "batch_size": 16,
     "lr": 0.00002,
     "num_epochs": 200,
-    "device": "mps"
+    "device": "cuda",
+    "gamma":2.0,
+    "alpha": 0.5
 }

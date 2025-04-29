@@ -12,7 +12,8 @@ from DataClasses.config import Config
 from DataLoaders.audioVisualLoader import create_audio_visual_loader
 
 from DataSets.audioVisualDataset import AudioVisualDataset
-from Models.early_fusion_mlp import EarlyFusionMLP
+from Models.early_fusion_lstm import EarlyFusionLSTM
+from Utils.focal_loss import FocalLoss
 from Utils.test_val_split import train_val_split1, train_val_split2
 
 import torchinfo
@@ -173,18 +174,21 @@ def objective(trial, full_train_dataset, config):
         cv_val_loader = DataLoader(cv_val_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
 
         try:
-            # --- Use EarlyFusionMLP ---
-            model = EarlyFusionMLP(
-                audio_dim=audio_dim, video_dim=video_dim, pers_dim=pers_dim,
-                hidden_dim=hidden_dim, # Use hidden_dim here
-                num_classes=num_classes,
-                dropout_rate=dropout_rate
+            model = EarlyFusionLSTM(
+                audio_dim=512,      # example for Wav2Vec
+                video_dim=709,      # example for OpenFace
+                pers_dim=1024,      # example for RoBERTa personalized
+                hidden_dim_lstm=128, # LSTM hidden size
+                hidden_dim_mlp=256,  # MLP hidden size
+                num_classes=5,      # number of classes
+                lstm_layers=1,      # number of LSTM layers
+                dropout_rate=0.5
             ).to(config.device) # Move model to device
         except ValueError as e: print(f"Model init error: {e}"); continue
 
         optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
         # --- Move criterion to device ---
-        criterion = nn.CrossEntropyLoss().to(config.device)
+        criterion = FocalLoss(gamma=config.gamma, weight=config.alpha).to(config.device)
         best_fold_acc = 0.0
 
         for epoch in range(config.num_epochs_tuning):
@@ -299,12 +303,16 @@ if __name__ == '__main__':
     print("\n--- Training Final Model ---")
     try:
         # --- Use EarlyFusionMLP ---
-        final_model = EarlyFusionMLP(
-            audio_dim=config.audio_dim, video_dim=config.video_dim, pers_dim=config.pers_dim,
-            hidden_dim=best_params['hidden_dim'], # Use hidden_dim here
-            num_classes=config.num_classes,
-            dropout_rate=best_params['dropout_rate']
-        ).to(config.device) # Move model to device
+        final_model = EarlyFusionLSTM(
+                audio_dim=512,      # example for Wav2Vec
+                video_dim=709,      # example for OpenFace
+                pers_dim=1024,      # example for RoBERTa personalized
+                hidden_dim_lstm=128, # LSTM hidden size
+                hidden_dim_mlp=256,  # MLP hidden size
+                num_classes=5,      # number of classes
+                lstm_layers=1,      # number of LSTM layers
+                dropout_rate=0.5
+            ).to(config.device) # Move model to device
     except ValueError as e: print(f"Final model init error: {e}"); exit()
 
     # --- Verify Model Device ---
@@ -326,11 +334,16 @@ if __name__ == '__main__':
         example_pers_shape = (config.batch_size, config.pers_dim)
         try:
             # --- Use EarlyFusionMLP for summary model ---
-            summary_model = EarlyFusionMLP(
-                audio_dim=config.audio_dim, video_dim=config.video_dim, pers_dim=config.pers_dim,
-                hidden_dim=best_params['hidden_dim'], # Use hidden_dim
-                num_classes=config.num_classes, dropout_rate=best_params['dropout_rate']
-            ).to('cpu') # Use CPU for summary
+            summary_model = EarlyFusionLSTM(
+                audio_dim=512,      # example for Wav2Vec
+                video_dim=709,      # example for OpenFace
+                pers_dim=1024,      # example for RoBERTa personalized
+                hidden_dim_lstm=128, # LSTM hidden size
+                hidden_dim_mlp=256,  # MLP hidden size
+                num_classes=5,      # number of classes
+                lstm_layers=1,      # number of LSTM layers
+                dropout_rate=0.5
+            ).to(config.device) # Move model to device
             torchinfo.summary(summary_model, input_size=[example_audio_shape, example_video_shape, example_pers_shape],
                               col_names=["input_size", "output_size", "num_params", "mult_adds"], depth=3, verbose=0)
             print(summary_model)
@@ -350,7 +363,7 @@ if __name__ == '__main__':
 
     final_optimizer = optim.Adam(final_model.parameters(), lr=best_params['lr'], weight_decay=best_params['weight_decay'])
     # --- Move criterion to device ---
-    final_criterion = nn.CrossEntropyLoss().to(config.device)
+    final_criterion = FocalLoss(gamma=config.gamma, weight=config.alpha).to(config.device)
     best_final_val_acc, best_epoch = 0.0, -1
 
     for epoch in range(config.num_epochs_final):
@@ -373,11 +386,15 @@ if __name__ == '__main__':
     if best_epoch != -1 and os.path.exists(config.model_save_path):
         try:
             # --- Use EarlyFusionMLP ---
-            eval_model = EarlyFusionMLP(
-                audio_dim=config.audio_dim, video_dim=config.video_dim, pers_dim=config.pers_dim,
-                hidden_dim=best_params['hidden_dim'], # Use hidden_dim
-                num_classes=config.num_classes,
-                dropout_rate=best_params['dropout_rate']
+            eval_model = EarlyFusionLSTM(
+                audio_dim=512,      # example for Wav2Vec
+                video_dim=709,      # example for OpenFace
+                pers_dim=1024,      # example for RoBERTa personalized
+                hidden_dim_lstm=128, # LSTM hidden size
+                hidden_dim_mlp=256,  # MLP hidden size
+                num_classes=5,      # number of classes
+                lstm_layers=1,      # number of LSTM layers
+                dropout_rate=0.5
             ).to(config.device) # Move model to device
             eval_model.load_state_dict(torch.load(config.model_save_path, map_location=config.device))
             eval_model.eval()
