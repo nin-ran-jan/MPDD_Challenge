@@ -12,14 +12,14 @@ from DataClasses.config import Config
 from DataLoaders.audioVisualLoader import create_audio_visual_loader
 
 from DataSets.audioVisualDataset import AudioVisualDataset
-from Models.early_fusion_lstm import EarlyFusionLSTM
+from Models.attention_fusion_lstm import AttentionFusionLSTM
 from Utils.focal_loss import FocalLoss
 from Utils.test_val_split import train_val_split1, train_val_split2
 
 import torchinfo
 
 
-model_save_path = './best_early_fusion_mlp.pth' # Path to save the final best model
+model_save_path = './best_Attention_fusion_mlp.pth' # Path to save the final best model
 optuna_trials = 50
 epochs_tuning = 15 # Number of epochs for EACH FOLD during tuning (keep low)
 
@@ -113,122 +113,122 @@ def evaluate(model, dataloader, criterion, device):
     return avg_loss, accuracy, report
 
 
-# --- Optuna Objective Function with Cross-Validation ---
-from sklearn.metrics import f1_score
+# # --- Optuna Objective Function with Cross-Validation ---
+# from sklearn.metrics import f1_score
 
-def objective(trial, full_train_dataset, config):
-    # --- Suggest Hyperparameters ---
-    hidden_dim = trial.suggest_categorical("hidden_dim", [64, 128, 256, 512])
-    dropout_rate = trial.suggest_float("dropout_rate", 0.1, 0.7, step=0.1)
-    lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
-    weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-3, log=True)
-    batch_size = config.batch_size
+# def objective(trial, full_train_dataset, config):
+#     # --- Suggest Hyperparameters ---
+#     hidden_dim = trial.suggest_categorical("hidden_dim", [64, 128, 256, 512])
+#     dropout_rate = trial.suggest_float("dropout_rate", 0.1, 0.7, step=0.1)
+#     lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
+#     weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-3, log=True)
+#     batch_size = config.batch_size
 
-    n_splits = config.cv_folds
-    labels_np = []
+#     n_splits = config.cv_folds
+#     labels_np = []
     
-    try:
-        label_key = {2: 'bin_category', 3: 'tri_category', 5: 'pen_category'}.get(config.labelcount)
-        if label_key and hasattr(full_train_dataset, 'data') and isinstance(full_train_dataset.data, list):
-             valid_labels = [int(item[label_key]) for item in full_train_dataset.data if isinstance(item, dict) and label_key in item and isinstance(item[label_key], (int, float, str)) and str(item[label_key]).isdigit()]
-             labels_np = np.array(valid_labels)
-             if len(labels_np) != len(full_train_dataset.data):
-                 print(f"Warn: Extracted {len(labels_np)}/{len(full_train_dataset.data)} labels.")
-        else:
-            raise ValueError("Cannot extract labels directly.")
-    except Exception as e:
-         print(f"Direct label extract failed ({e}). Falling back.")
-         try:
-             temp_loader = DataLoader(full_train_dataset, batch_size=config.batch_size)
-             labels_list = [b['emo_label'].numpy() for b in temp_loader if 'emo_label' in b]
-             if labels_list:
-                 labels_np = np.concatenate(labels_list)
-         except Exception as e_iter:
-             print(f"Label iter failed: {e_iter}")
-             return 0.0
+#     try:
+#         label_key = {2: 'bin_category', 3: 'tri_category', 5: 'pen_category'}.get(config.labelcount)
+#         if label_key and hasattr(full_train_dataset, 'data') and isinstance(full_train_dataset.data, list):
+#              valid_labels = [int(item[label_key]) for item in full_train_dataset.data if isinstance(item, dict) and label_key in item and isinstance(item[label_key], (int, float, str)) and str(item[label_key]).isdigit()]
+#              labels_np = np.array(valid_labels)
+#              if len(labels_np) != len(full_train_dataset.data):
+#                  print(f"Warn: Extracted {len(labels_np)}/{len(full_train_dataset.data)} labels.")
+#         else:
+#             raise ValueError("Cannot extract labels directly.")
+#     except Exception as e:
+#          print(f"Direct label extract failed ({e}). Falling back.")
+#          try:
+#              temp_loader = DataLoader(full_train_dataset, batch_size=config.batch_size)
+#              labels_list = [b['emo_label'].numpy() for b in temp_loader if 'emo_label' in b]
+#              if labels_list:
+#                  labels_np = np.concatenate(labels_list)
+#          except Exception as e_iter:
+#              print(f"Label iter failed: {e_iter}")
+#              return 0.0
 
-    if len(labels_np) == 0:
-        print("Error: No labels extracted.")
-        return 0.0
+#     if len(labels_np) == 0:
+#         print("Error: No labels extracted.")
+#         return 0.0
 
-    unique_labels, counts = np.unique(labels_np, return_counts=True)
-    min_samples = np.min(counts) if len(counts) > 0 else 0
-    actual_n_splits = min(n_splits, min_samples)
-    if actual_n_splits < 2:
-        print(f"Warn: Smallest class ({min_samples}) too small for {n_splits}-CV.")
-        return 0.0
-    if actual_n_splits < n_splits:
-        print(f"Warn: Reducing CV folds to {actual_n_splits}.")
+#     unique_labels, counts = np.unique(labels_np, return_counts=True)
+#     min_samples = np.min(counts) if len(counts) > 0 else 0
+#     actual_n_splits = min(n_splits, min_samples)
+#     if actual_n_splits < 2:
+#         print(f"Warn: Smallest class ({min_samples}) too small for {n_splits}-CV.")
+#         return 0.0
+#     if actual_n_splits < n_splits:
+#         print(f"Warn: Reducing CV folds to {actual_n_splits}.")
 
-    skf = StratifiedKFold(n_splits=actual_n_splits, shuffle=True, random_state=config.seed)
-    fold_macro_f1s = []
+#     skf = StratifiedKFold(n_splits=actual_n_splits, shuffle=True, random_state=config.seed)
+#     fold_macro_f1s = []
 
-    print(f"\nTrial {trial.number}: hidden={hidden_dim}, dr={dropout_rate:.2f}, lr={lr:.6f}, wd={weight_decay:.6f}")
+#     print(f"\nTrial {trial.number}: hidden={hidden_dim}, dr={dropout_rate:.2f}, lr={lr:.6f}, wd={weight_decay:.6f}")
 
-    split_indices = np.arange(len(labels_np))
-    global_step_counter = 0
+#     split_indices = np.arange(len(labels_np))
+#     global_step_counter = 0
 
-    for fold, (train_split_idx, val_split_idx) in enumerate(skf.split(split_indices, labels_np)):
-        print(f"  Fold {fold+1}/{actual_n_splits}...")
-        train_orig_idx = split_indices[train_split_idx]
-        val_orig_idx = split_indices[val_split_idx]
+#     for fold, (train_split_idx, val_split_idx) in enumerate(skf.split(split_indices, labels_np)):
+#         print(f"  Fold {fold+1}/{actual_n_splits}...")
+#         train_orig_idx = split_indices[train_split_idx]
+#         val_orig_idx = split_indices[val_split_idx]
 
-        cv_train_dataset = Subset(full_train_dataset, train_orig_idx)
-        cv_val_dataset = Subset(full_train_dataset, val_orig_idx)
-        if len(cv_train_dataset) == 0 or len(cv_val_dataset) == 0:
-            print(f"Warn: Fold {fold+1} empty subset.")
-            continue
+#         cv_train_dataset = Subset(full_train_dataset, train_orig_idx)
+#         cv_val_dataset = Subset(full_train_dataset, val_orig_idx)
+#         if len(cv_train_dataset) == 0 or len(cv_val_dataset) == 0:
+#             print(f"Warn: Fold {fold+1} empty subset.")
+#             continue
 
-        cv_train_loader = DataLoader(cv_train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
-        cv_val_loader = DataLoader(cv_val_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
+#         cv_train_loader = DataLoader(cv_train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
+#         cv_val_loader = DataLoader(cv_val_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
 
-        model = EarlyFusionLSTM(
-            audio_dim=config.audio_dim,
-            video_dim=config.video_dim,
-            pers_dim=config.pers_dim,
-            hidden_dim_lstm=128,
-            hidden_dim_mlp=hidden_dim,   # <-- tuned hidden_dim
-            num_classes=config.num_classes,
-            lstm_layers=1,
-            dropout_rate=dropout_rate
-        ).to(config.device)
+#         model = AttentionFusionLSTM(
+#             audio_dim=config.audio_dim,
+#             video_dim=config.video_dim,
+#             pers_dim=config.pers_dim,
+#             hidden_dim_lstm=128,
+#             hidden_dim_mlp=hidden_dim,   # <-- tuned hidden_dim
+#             num_classes=config.num_classes,
+#             lstm_layers=1,
+#             dropout_rate=dropout_rate
+#         ).to(config.device)
 
-        optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-        criterion = FocalLoss(gamma=config.gamma, weight=config.alpha).to(config.device)
+#         optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+#         criterion = FocalLoss(gamma=config.gamma, weight=config.alpha).to(config.device)
         
-        best_fold_macro_f1 = 0.0
+#         best_fold_macro_f1 = 0.0
 
-        for epoch in range(config.num_epochs_tuning):
-            try:
-                train_loss, train_acc = train_epoch(model, cv_train_loader, optimizer, criterion, config.device)
-                val_loss, val_acc, val_report = evaluate(model, cv_val_loader, criterion, config.device)
-                if val_report:
-                    # Instead of accuracy, extract macro F1
-                    macro_f1 = val_report.get('macro avg', {}).get('f1-score', 0.0)
-                    best_fold_macro_f1 = max(best_fold_macro_f1, macro_f1)
+#         for epoch in range(config.num_epochs_tuning):
+#             try:
+#                 train_loss, train_acc = train_epoch(model, cv_train_loader, optimizer, criterion, config.device)
+#                 val_loss, val_acc, val_report = evaluate(model, cv_val_loader, criterion, config.device)
+#                 if val_report:
+#                     # Instead of accuracy, extract macro F1
+#                     macro_f1 = val_report.get('macro avg', {}).get('f1-score', 0.0)
+#                     best_fold_macro_f1 = max(best_fold_macro_f1, macro_f1)
 
-                    trial.report(macro_f1, global_step_counter)
-                    global_step_counter += 1
-                    if trial.should_prune():
-                        raise optuna.TrialPruned()
-                else:
-                    print(f"    Eval failed.")
-                    break
-            except optuna.TrialPruned:
-                raise
-            except Exception as e_epoch:
-                print(f"Error Fold {fold+1} Epoch {epoch+1}: {e_epoch}")
-                break
+#                     trial.report(macro_f1, global_step_counter)
+#                     global_step_counter += 1
+#                     if trial.should_prune():
+#                         raise optuna.TrialPruned()
+#                 else:
+#                     print(f"    Eval failed.")
+#                     break
+#             except optuna.TrialPruned:
+#                 raise
+#             except Exception as e_epoch:
+#                 print(f"Error Fold {fold+1} Epoch {epoch+1}: {e_epoch}")
+#                 break
 
-        fold_macro_f1s.append(best_fold_macro_f1)
-        print(f"  Fold {fold+1} Best Macro F1: {best_fold_macro_f1:.4f}")
+#         fold_macro_f1s.append(best_fold_macro_f1)
+#         print(f"  Fold {fold+1} Best Macro F1: {best_fold_macro_f1:.4f}")
 
-    average_macro_f1 = np.mean(fold_macro_f1s) if fold_macro_f1s else 0.0
-    print(f"Trial {trial.number} Avg CV Macro F1: {average_macro_f1:.4f}")
-    if not fold_macro_f1s:
-        print(f"Warn: Trial {trial.number} no folds complete.")
-        return 0.0
-    return average_macro_f1
+#     average_macro_f1 = np.mean(fold_macro_f1s) if fold_macro_f1s else 0.0
+#     print(f"Trial {trial.number} Avg CV Macro F1: {average_macro_f1:.4f}")
+#     if not fold_macro_f1s:
+#         print(f"Warn: Trial {trial.number} no folds complete.")
+#         return 0.0
+#     return average_macro_f1
 
 
 
@@ -302,23 +302,30 @@ if __name__ == '__main__':
     except Exception as e: print(f"Error creating datasets: {e}"); exit()
     if len(full_train_dataset) == 0 or len(val_dataset) == 0: print("Error: Datasets empty."); exit()
 
-    # Optuna Tuning
-    print("\n--- Starting Hyperparameter Tuning ---")
-    study = optuna.create_study(direction="maximize", pruner=optuna.pruners.MedianPruner())
-    try: study.optimize(lambda trial: objective(trial, full_train_dataset, config), n_trials=config.optuna_trials)
-    except Exception as e: print(f"Optuna error: {e}");
-    print("\n--- Optuna Study Complete ---")
-    if not study.trials: print("No Optuna trials ran."); exit()
-    completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
-    if not completed_trials: print("No Optuna trials completed."); exit()
-    best_trial = study.best_trial; best_params = best_trial.params
-    print(f"Best trial #{best_trial.number}: Acc={best_trial.value:.4f}"); [print(f"  {k}: {v}") for k, v in best_params.items()]
+    # # Optuna Tuning
+    # print("\n--- Starting Hyperparameter Tuning ---")
+    # study = optuna.create_study(direction="maximize", pruner=optuna.pruners.MedianPruner())
+    # try: study.optimize(lambda trial: objective(trial, full_train_dataset, config), n_trials=config.optuna_trials)
+    # except Exception as e: print(f"Optuna error: {e}");
+    # print("\n--- Optuna Study Complete ---")
+    # if not study.trials: print("No Optuna trials ran."); exit()
+    # completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
+    # if not completed_trials: print("No Optuna trials completed."); exit()
+    # best_trial = study.best_trial; best_params = best_trial.params
+    # print(f"Best trial #{best_trial.number}: Acc={best_trial.value:.4f}"); [print(f"  {k}: {v}") for k, v in best_params.items()]
+
+    best_params = {
+        "hidden_dim": 512,
+        "dropout_rate": 0.1,
+        "lr": 0.0002444232559572032,
+        "weight_decay": 2.771101595304372e-06
+    }
 
     # Final Training
     print("\n--- Training Final Model ---")
     try:
-        # --- Use EarlyFusionMLP ---
-        final_model = EarlyFusionLSTM(
+        # --- Use AttentionFusionMLP ---
+        final_model = AttentionFusionLSTM(
                 audio_dim=config.audio_dim,      # example for Wav2Vec
                 video_dim=config.video_dim,      # example for OpenFace
                 pers_dim=config.pers_dim,      # example for RoBERTa personalized
@@ -348,8 +355,8 @@ if __name__ == '__main__':
         example_video_shape = (config.batch_size, config.feature_max_len, config.video_dim)
         example_pers_shape = (config.batch_size, config.pers_dim)
         try:
-            # --- Use EarlyFusionMLP for summary model ---
-            summary_model = EarlyFusionLSTM(
+            # --- Use AttentionFusionMLP for summary model ---
+            summary_model = AttentionFusionLSTM(
                 audio_dim=config.audio_dim,      # example for Wav2Vec
                 video_dim=config.video_dim,      # example for OpenFace
                 pers_dim=config.pers_dim,      # example for RoBERTa personalized
@@ -400,8 +407,8 @@ if __name__ == '__main__':
     print("\n--- Evaluating Best Saved Model ---")
     if best_epoch != -1 and os.path.exists(config.model_save_path):
         try:
-            # --- Use EarlyFusionMLP ---
-            eval_model = EarlyFusionLSTM(
+            # --- Use AttentionFusionMLP ---
+            eval_model = AttentionFusionLSTM(
                 audio_dim=config.audio_dim,      # example for Wav2Vec
                 video_dim=config.video_dim,      # example for OpenFace
                 pers_dim=config.pers_dim,      # example for RoBERTa personalized

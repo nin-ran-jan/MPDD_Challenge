@@ -1,0 +1,109 @@
+Using CUDA: NVIDIA L4
+Splitting data...
+Data split: Train=294, Val=43
+Determining feature dimensions...
+  Audio Dim: 512
+  Video Dim: 709
+Final Dims: A=512, V=709, P=1024, Cls=2
+Creating Datasets...
+
+--- Training Final Model ---
+Final model is on device: cuda:0
+
+--- Final Model Architecture & Parameters ---
+EarlyFusionLSTM(
+  (audio_lstm): LSTM(512, 128, batch_first=True)
+  (video_lstm): LSTM(709, 128, batch_first=True)
+  (dropout): Dropout(p=0.1, inplace=False)
+  (fc1): Linear(in_features=1280, out_features=512, bias=True)
+  (relu): ReLU()
+  (fc2): Linear(in_features=512, out_features=2, bias=True)
+)
+Epoch 1/50: Train Loss=0.0705, Acc=0.7721 | Val Loss=0.0941, Acc=0.7209
+  -> Saved best model (Epoch 1, Val Acc: 0.7209)
+Epoch 2/50: Train Loss=0.0630, Acc=0.7619 | Val Loss=0.0777, Acc=0.7209
+Epoch 3/50: Train Loss=0.0657, Acc=0.7483 | Val Loss=0.0909, Acc=0.7209
+Epoch 4/50: Train Loss=0.0611, Acc=0.7857 | Val Loss=0.0763, Acc=0.7209
+Epoch 5/50: Train Loss=0.0574, Acc=0.7721 | Val Loss=0.0865, Acc=0.7209
+Epoch 6/50: Train Loss=0.0576, Acc=0.7857 | Val Loss=0.0716, Acc=0.7209
+Epoch 7/50: Train Loss=0.0608, Acc=0.7789 | Val Loss=0.0757, Acc=0.7209
+Epoch 8/50: Train Loss=0.0562, Acc=0.7721 | Val Loss=0.0801, Acc=0.7209
+Epoch 9/50: Train Loss=0.0526, Acc=0.7925 | Val Loss=0.0758, Acc=0.7442
+  -> Saved best model (Epoch 9, Val Acc: 0.7442)
+Epoch 10/50: Train Loss=0.0509, Acc=0.7959 | Val Loss=0.1214, Acc=0.7209
+Epoch 11/50: Train Loss=0.0496, Acc=0.7959 | Val Loss=0.0736, Acc=0.7442
+Epoch 12/50: Train Loss=0.0441, Acc=0.8163 | Val Loss=0.0771, Acc=0.7442
+Epoch 13/50: Train Loss=0.0450, Acc=0.8095 | Val Loss=0.0730, Acc=0.7442
+Epoch 14/50: Train Loss=0.0488, Acc=0.8095 | Val Loss=0.0706, Acc=0.7674
+  -> Saved best model (Epoch 14, Val Acc: 0.7674)
+Epoch 15/50: Train Loss=0.0399, Acc=0.8299 | Val Loss=0.0897, Acc=0.7442
+Epoch 16/50: Train Loss=0.0400, Acc=0.8231 | Val Loss=0.0880, Acc=0.7442
+Epoch 17/50: Train Loss=0.0364, Acc=0.8367 | Val Loss=0.0910, Acc=0.7442
+Epoch 18/50: Train Loss=0.0351, Acc=0.8197 | Val Loss=0.1392, Acc=0.7442
+Epoch 19/50: Train Loss=0.0366, Acc=0.8367 | Val Loss=0.0949, Acc=0.7442
+Epoch 20/50: Train Loss=0.0335, Acc=0.8707 | Val Loss=0.0936, Acc=0.7442
+Epoch 21/50: Train Loss=0.0277, Acc=0.8537 | Val Loss=0.1286, Acc=0.8140
+  -> Saved best model (Epoch 21, Val Acc: 0.8140)
+Epoch 22/50: Train Loss=0.0261, Acc=0.8844 | Val Loss=0.1810, Acc=0.3953
+Epoch 23/50: Train Loss=0.0263, Acc=0.8605 | Val Loss=0.0906, Acc=0.8140
+Epoch 24/50: Train Loss=0.0240, Acc=0.8776 | Val Loss=0.0942, Acc=0.6047
+Epoch 25/50: Train Loss=0.0281, Acc=0.8401 | Val Loss=0.0996, Acc=0.8140
+Epoch 26/50: Train Loss=0.0253, Acc=0.8776 | Val Loss=0.1423, Acc=0.7442
+Epoch 27/50: Train Loss=0.0210, Acc=0.8980 | Val Loss=0.2523, Acc=0.7442
+Epoch 28/50: Train Loss=0.0219, Acc=0.8810 | Val Loss=0.1007, Acc=0.7209
+Epoch 29/50: Train Loss=0.0207, Acc=0.8810 | Val Loss=0.1233, Acc=0.5349
+Epoch 30/50: Train Loss=0.0201, Acc=0.9014 | Val Loss=0.1269, Acc=0.8140
+Epoch 31/50: Train Loss=0.0154, Acc=0.9286 | Val Loss=0.1686, Acc=0.7674
+Epoch 32/50: Train Loss=0.0144, Acc=0.9456 | Val Loss=0.2603, Acc=0.5349
+Epoch 33/50: Train Loss=0.0110, Acc=0.9490 | Val Loss=0.3141, Acc=0.6512
+Epoch 34/50: Train Loss=0.0161, Acc=0.9320 | Val Loss=0.2001, Acc=0.6744
+Epoch 35/50: Train Loss=0.0122, Acc=0.9490 | Val Loss=0.2780, Acc=0.7209
+Epoch 36/50: Train Loss=0.0083, Acc=0.9660 | Val Loss=0.2507, Acc=0.7442
+Epoch 37/50: Train Loss=0.0213, Acc=0.9184 | Val Loss=0.1370, Acc=0.7674
+Epoch 38/50: Train Loss=0.0109, Acc=0.9626 | Val Loss=0.1712, Acc=0.7442
+Epoch 39/50: Train Loss=0.0080, Acc=0.9558 | Val Loss=0.2149, Acc=0.7209
+Epoch 40/50: Train Loss=0.0166, Acc=0.9354 | Val Loss=0.0909, Acc=0.6977
+Epoch 41/50: Train Loss=0.0102, Acc=0.9490 | Val Loss=0.0893, Acc=0.7907
+Epoch 42/50: Train Loss=0.0078, Acc=0.9660 | Val Loss=0.1042, Acc=0.6744
+Epoch 43/50: Train Loss=0.0095, Acc=0.9558 | Val Loss=0.1223, Acc=0.6512
+Epoch 44/50: Train Loss=0.0055, Acc=0.9694 | Val Loss=0.1350, Acc=0.7907
+Epoch 45/50: Train Loss=0.0068, Acc=0.9660 | Val Loss=0.1761, Acc=0.6977
+Epoch 46/50: Train Loss=0.0069, Acc=0.9592 | Val Loss=0.2019, Acc=0.7209
+Epoch 47/50: Train Loss=0.0065, Acc=0.9592 | Val Loss=0.2489, Acc=0.6977
+Epoch 48/50: Train Loss=0.0056, Acc=0.9762 | Val Loss=0.2047, Acc=0.7442
+Epoch 49/50: Train Loss=0.0074, Acc=0.9490 | Val Loss=0.2459, Acc=0.7674
+Epoch 50/50: Train Loss=0.0033, Acc=0.9864 | Val Loss=0.2349, Acc=0.6047
+
+--- Final Training Complete ---
+Best Val Acc (0.8140) at epoch 21
+
+--- Evaluating Best Saved Model ---
+Final Best Model Val Acc: 0.8140
+Classification Report:
+{
+  "0": {
+    "precision": 0.8285714285714286,
+    "recall": 0.9354838709677419,
+    "f1-score": 0.8787878787878788,
+    "support": 31.0
+  },
+  "1": {
+    "precision": 0.75,
+    "recall": 0.5,
+    "f1-score": 0.6,
+    "support": 12.0
+  },
+  "accuracy": 0.813953488372093,
+  "macro avg": {
+    "precision": 0.7892857142857144,
+    "recall": 0.717741935483871,
+    "f1-score": 0.7393939393939394,
+    "support": 43.0
+  },
+  "weighted avg": {
+    "precision": 0.8066445182724252,
+    "recall": 0.813953488372093,
+    "f1-score": 0.8009866102889358,
+    "support": 43.0
+  }
+}

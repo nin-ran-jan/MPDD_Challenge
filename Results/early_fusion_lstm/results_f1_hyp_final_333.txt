@@ -1,0 +1,110 @@
+Using CUDA: NVIDIA L4
+Splitting data...
+Data split: Train=294, Val=43
+Determining feature dimensions...
+  Audio Dim: 512
+  Video Dim: 709
+Final Dims: A=512, V=709, P=1024, Cls=2
+Creating Datasets...
+
+--- Training Final Model ---
+Final model is on device: cuda:0
+
+--- Final Model Architecture & Parameters ---
+EarlyFusionLSTM(
+  (audio_lstm): LSTM(512, 128, batch_first=True)
+  (video_lstm): LSTM(709, 128, batch_first=True)
+  (dropout): Dropout(p=0.1, inplace=False)
+  (fc1): Linear(in_features=1280, out_features=512, bias=True)
+  (relu): ReLU()
+  (fc2): Linear(in_features=512, out_features=2, bias=True)
+)
+Epoch 1/50: Train Loss=0.0740, Acc=0.7551 | Val Loss=0.0849, Acc=0.6047 | Macro F1=0.3768
+  -> Saved best model (Epoch 1, Macro F1: 0.3768)
+Epoch 2/50: Train Loss=0.0672, Acc=0.7925 | Val Loss=0.1435, Acc=0.6047 | Macro F1=0.3768
+Epoch 3/50: Train Loss=0.0582, Acc=0.7891 | Val Loss=0.1221, Acc=0.6047 | Macro F1=0.3768
+Epoch 4/50: Train Loss=0.0636, Acc=0.7891 | Val Loss=0.0909, Acc=0.6047 | Macro F1=0.3768
+Epoch 5/50: Train Loss=0.0543, Acc=0.7891 | Val Loss=0.0831, Acc=0.6047 | Macro F1=0.3768
+Epoch 6/50: Train Loss=0.0598, Acc=0.7925 | Val Loss=0.1051, Acc=0.4651 | Macro F1=0.4017
+  -> Saved best model (Epoch 6, Macro F1: 0.4017)
+Epoch 7/50: Train Loss=0.0610, Acc=0.7517 | Val Loss=0.1170, Acc=0.6047 | Macro F1=0.3768
+Epoch 8/50: Train Loss=0.0544, Acc=0.7891 | Val Loss=0.0772, Acc=0.6977 | Macro F1=0.5905
+  -> Saved best model (Epoch 8, Macro F1: 0.5905)
+Epoch 9/50: Train Loss=0.0545, Acc=0.7993 | Val Loss=0.0777, Acc=0.6977 | Macro F1=0.5905
+Epoch 10/50: Train Loss=0.0543, Acc=0.8163 | Val Loss=0.0747, Acc=0.7209 | Macro F1=0.6335
+  -> Saved best model (Epoch 10, Macro F1: 0.6335)
+Epoch 11/50: Train Loss=0.0539, Acc=0.8197 | Val Loss=0.0747, Acc=0.6977 | Macro F1=0.5905
+Epoch 12/50: Train Loss=0.0505, Acc=0.8197 | Val Loss=0.0854, Acc=0.6977 | Macro F1=0.5905
+Epoch 13/50: Train Loss=0.0478, Acc=0.8027 | Val Loss=0.0760, Acc=0.6977 | Macro F1=0.5905
+Epoch 14/50: Train Loss=0.0442, Acc=0.8299 | Val Loss=0.1017, Acc=0.6512 | Macro F1=0.4933
+Epoch 15/50: Train Loss=0.0430, Acc=0.8367 | Val Loss=0.0929, Acc=0.6512 | Macro F1=0.4933
+Epoch 16/50: Train Loss=0.0398, Acc=0.8435 | Val Loss=0.0855, Acc=0.6512 | Macro F1=0.4933
+Epoch 17/50: Train Loss=0.0388, Acc=0.8401 | Val Loss=0.1309, Acc=0.6279 | Macro F1=0.4379
+Epoch 18/50: Train Loss=0.0359, Acc=0.8537 | Val Loss=0.0846, Acc=0.6512 | Macro F1=0.4933
+Epoch 19/50: Train Loss=0.0431, Acc=0.8503 | Val Loss=0.1045, Acc=0.6744 | Macro F1=0.5439
+Epoch 20/50: Train Loss=0.0308, Acc=0.8605 | Val Loss=0.0682, Acc=0.6977 | Macro F1=0.5905
+Epoch 21/50: Train Loss=0.0359, Acc=0.8571 | Val Loss=0.0723, Acc=0.6744 | Macro F1=0.5439
+Epoch 22/50: Train Loss=0.0291, Acc=0.8776 | Val Loss=0.1093, Acc=0.5814 | Macro F1=0.5038
+Epoch 23/50: Train Loss=0.0302, Acc=0.8435 | Val Loss=0.1147, Acc=0.6744 | Macro F1=0.5439
+Epoch 24/50: Train Loss=0.0275, Acc=0.8469 | Val Loss=0.1467, Acc=0.6744 | Macro F1=0.5439
+Epoch 25/50: Train Loss=0.0246, Acc=0.8878 | Val Loss=0.0952, Acc=0.7209 | Macro F1=0.6692
+  -> Saved best model (Epoch 25, Macro F1: 0.6692)
+Epoch 26/50: Train Loss=0.0223, Acc=0.8980 | Val Loss=0.1482, Acc=0.6977 | Macro F1=0.5905
+Epoch 27/50: Train Loss=0.0267, Acc=0.9048 | Val Loss=0.1990, Acc=0.6512 | Macro F1=0.4933
+Epoch 28/50: Train Loss=0.0215, Acc=0.8912 | Val Loss=0.0939, Acc=0.6744 | Macro F1=0.5439
+Epoch 29/50: Train Loss=0.0266, Acc=0.8980 | Val Loss=0.1229, Acc=0.6512 | Macro F1=0.5951
+Epoch 30/50: Train Loss=0.0258, Acc=0.8844 | Val Loss=0.0908, Acc=0.6977 | Macro F1=0.5905
+Epoch 31/50: Train Loss=0.0261, Acc=0.8980 | Val Loss=0.0907, Acc=0.6977 | Macro F1=0.6491
+Epoch 32/50: Train Loss=0.0208, Acc=0.8980 | Val Loss=0.1335, Acc=0.6744 | Macro F1=0.5439
+Epoch 33/50: Train Loss=0.0198, Acc=0.9014 | Val Loss=0.0857, Acc=0.6977 | Macro F1=0.5905
+Epoch 34/50: Train Loss=0.0143, Acc=0.9388 | Val Loss=0.1382, Acc=0.6744 | Macro F1=0.5439
+Epoch 35/50: Train Loss=0.0146, Acc=0.9252 | Val Loss=0.0994, Acc=0.6512 | Macro F1=0.5549
+Epoch 36/50: Train Loss=0.0139, Acc=0.9388 | Val Loss=0.1198, Acc=0.6512 | Macro F1=0.5951
+Epoch 37/50: Train Loss=0.0139, Acc=0.9218 | Val Loss=0.1584, Acc=0.6977 | Macro F1=0.5905
+Epoch 38/50: Train Loss=0.0167, Acc=0.9082 | Val Loss=0.1988, Acc=0.6279 | Macro F1=0.5114
+Epoch 39/50: Train Loss=0.0167, Acc=0.9082 | Val Loss=0.1814, Acc=0.6977 | Macro F1=0.5905
+Epoch 40/50: Train Loss=0.0092, Acc=0.9490 | Val Loss=0.1312, Acc=0.6279 | Macro F1=0.6178
+Epoch 41/50: Train Loss=0.0099, Acc=0.9422 | Val Loss=0.2729, Acc=0.6512 | Macro F1=0.5275
+Epoch 42/50: Train Loss=0.0100, Acc=0.9388 | Val Loss=0.1954, Acc=0.6744 | Macro F1=0.5954
+Epoch 43/50: Train Loss=0.0094, Acc=0.9558 | Val Loss=0.1798, Acc=0.6744 | Macro F1=0.5724
+Epoch 44/50: Train Loss=0.0161, Acc=0.9354 | Val Loss=0.0849, Acc=0.6977 | Macro F1=0.5905
+Epoch 45/50: Train Loss=0.0079, Acc=0.9626 | Val Loss=0.1433, Acc=0.6279 | Macro F1=0.5376
+Epoch 46/50: Train Loss=0.0062, Acc=0.9728 | Val Loss=0.1756, Acc=0.6744 | Macro F1=0.5439
+Epoch 47/50: Train Loss=0.0071, Acc=0.9592 | Val Loss=0.2108, Acc=0.6512 | Macro F1=0.5549
+Epoch 48/50: Train Loss=0.0062, Acc=0.9558 | Val Loss=0.2341, Acc=0.6279 | Macro F1=0.4788
+Epoch 49/50: Train Loss=0.0051, Acc=0.9660 | Val Loss=0.1872, Acc=0.6047 | Macro F1=0.5207
+Epoch 50/50: Train Loss=0.0045, Acc=0.9762 | Val Loss=0.1858, Acc=0.6279 | Macro F1=0.5590
+
+--- Final Training Complete ---
+Best Val Macro F1 (0.6692) at epoch 25
+
+--- Evaluating Best Saved Model ---
+Final Best Model Val Acc: 0.7209
+Classification Report:
+{
+  "0": {
+    "precision": 0.7058823529411765,
+    "recall": 0.9230769230769231,
+    "f1-score": 0.8,
+    "support": 26.0
+  },
+  "1": {
+    "precision": 0.7777777777777778,
+    "recall": 0.4117647058823529,
+    "f1-score": 0.5384615384615384,
+    "support": 17.0
+  },
+  "accuracy": 0.7209302325581395,
+  "macro avg": {
+    "precision": 0.7418300653594772,
+    "recall": 0.6674208144796381,
+    "f1-score": 0.6692307692307693,
+    "support": 43.0
+  },
+  "weighted avg": {
+    "precision": 0.7343061255509957,
+    "recall": 0.7209302325581395,
+    "f1-score": 0.6966010733452594,
+    "support": 43.0
+  }
+}
