@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import json
-from typing import Optional
+from typing import List, Optional
 
 
 @dataclass
@@ -32,6 +32,11 @@ class Config:
     # For Early LSTM
     gamma: float = 2.0
     alpha: float = 0.25
+
+    # for transformers
+    optuna_timeout: Optional[int] = 3600  # Optional: Timeout for Optuna study in seconds (e.g., 1 hour). Use None for no timeout.
+    class_weights: Optional[List[float]] = None 
+    calculate_weights_dynamically: bool = True # Calculate weights from dataset if True
 
     @staticmethod
     def from_json(json_file_path: str) -> 'Config':

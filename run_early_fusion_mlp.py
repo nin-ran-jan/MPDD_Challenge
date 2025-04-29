@@ -1,26 +1,34 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, Subset, Dataset # Added Dataset import
 import numpy as np
 import os
 import json
 import optuna # For hyperparameter tuning
 from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import accuracy_score, classification_report
-from DataClasses.config import Config
-from DataLoaders.audioVisualLoader import create_audio_visual_loader
+# --- Import f1_score ---
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score
+import matplotlib.pyplot as plt # For plotting confusion matrix
+import seaborn as sns # For plotting confusion matrix
 
+
+from dataclasses import dataclass, field # Assuming Config is a dataclass
+from typing import Optional, List
+
+from DataClasses.config import Config
 from DataSets.audioVisualDataset import AudioVisualDataset
 from Models.early_fusion_mlp import EarlyFusionMLP
-from Utils.test_val_split import train_val_split1, train_val_split2
+from Utils.focal_loss import FocalLoss
+from Utils.test_val_split import train_val_split1, train_val_split2 # For optional type hints
 
-import torchinfo
+# Import torchinfo for model summary
+try:
+    import torchinfo
+except ImportError:
+    print("torchinfo not found. Install using: pip install torchinfo")
+    torchinfo = None
 
-
-model_save_path = './best_early_fusion_mlp.pth' # Path to save the final best model
-optuna_trials = 50
-epochs_tuning = 15 # Number of epochs for EACH FOLD during tuning (keep low)
 
 # --- Training and Evaluation Functions (with device placement fix) ---
 def train_epoch(model, dataloader, optimizer, criterion, device):
@@ -29,7 +37,7 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
     total_loss = 0.0
     all_preds, all_labels = [], []
     num_samples = 0
-    if dataloader is None or len(dataloader.dataset) == 0: return 0.0, 0.0
+    if dataloader is None or len(dataloader.dataset) == 0: return 0.0, 0.0 # Return 0 for accuracy too
 
     for batch_idx, batch in enumerate(dataloader):
         if not isinstance(batch, dict) or 'A_feat' not in batch: continue
@@ -55,26 +63,23 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
             num_samples += batch_size
         except Exception as e:
             print(f"Error train batch {batch_idx}: {e}")
-            # Print device info on error for debugging
-            print(f"  Model Device={next(model.parameters()).device}")
-            if 'audio_feat' in locals(): print(f"  Audio Device={audio_feat.device}")
-            if 'video_feat' in locals(): print(f"  Video Device={video_feat.device}")
-            if 'pers_feat' in locals(): print(f"  Pers Device={pers_feat.device}")
-            if 'labels' in locals(): print(f"  Labels Device={labels.device}")
             continue # Consider raising e for debugging
 
     avg_loss = total_loss / num_samples if num_samples > 0 else 0
+    # --- Calculate weighted F1 score for training (optional, usually accuracy is sufficient here) ---
+    # f1_train = f1_score(all_labels, all_preds, average='weighted', zero_division=0) if num_samples > 0 else 0.0
     accuracy = accuracy_score(all_labels, all_preds) if num_samples > 0 else 0
-    return avg_loss, accuracy
+    return avg_loss, accuracy # Return accuracy for train epoch logs
 
+# --- Updated evaluate function to return weighted F1 score ---
 def evaluate(model, dataloader, criterion, device):
     """Evaluates the model on a given dataset."""
     model.eval()
     total_loss = 0.0
     all_preds, all_labels = [], []
     num_samples = 0
-    if dataloader is None or len(dataloader.dataset) == 0: return 0.0, 0.0, {}
-
+    # Return default values if dataloader is empty
+    if dataloader is None or len(dataloader.dataset) == 0: return 0.0, 0.0, {}, 0.0, [], []
 
     with torch.no_grad():
         for batch_idx, batch in enumerate(dataloader):
@@ -98,24 +103,20 @@ def evaluate(model, dataloader, criterion, device):
                 num_samples += batch_size
             except Exception as e:
                 print(f"Error eval batch {batch_idx}: {e}")
-                # Print device info on error for debugging
-                print(f"  Model Device={next(model.parameters()).device}")
-                if 'audio_feat' in locals(): print(f"  Audio Device={audio_feat.device}")
-                if 'video_feat' in locals(): print(f"  Video Device={video_feat.device}")
-                if 'pers_feat' in locals(): print(f"  Pers Device={pers_feat.device}")
-                if 'labels' in locals(): print(f"  Labels Device={labels.device}")
                 continue # Consider raising e for debugging
 
     avg_loss = total_loss / num_samples if num_samples > 0 else 0
     accuracy = accuracy_score(all_labels, all_preds) if num_samples > 0 else 0
-    report = classification_report(all_labels, all_preds, zero_division=0, output_dict=True) if num_samples > 0 else {}
-    return avg_loss, accuracy, report
+    report_dict = classification_report(all_labels, all_preds, zero_division=0, output_dict=True) if num_samples > 0 else {}
+    # --- Calculate weighted F1 score ---
+    f1_weighted = f1_score(all_labels, all_preds, average='weighted', zero_division=0) if num_samples > 0 else 0.0
+    # Return F1 score along with other metrics
+    return avg_loss, accuracy, report_dict, f1_weighted, all_labels, all_preds
 
 
-# --- Optuna Objective Function with Cross-Validation ---
+# --- Optuna Objective Function with Cross-Validation (Optimizing F1) ---
 def objective(trial, full_train_dataset, config):
     # --- Suggest Hyperparameters ---
-    # Use "hidden_dim" for EarlyFusionMLP
     hidden_dim = trial.suggest_categorical("hidden_dim", [64, 128, 256, 512])
     dropout_rate = trial.suggest_float("dropout_rate", 0.1, 0.7, step=0.1)
     lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
@@ -147,8 +148,8 @@ def objective(trial, full_train_dataset, config):
     if actual_n_splits < n_splits: print(f"Warn: Reducing CV folds to {actual_n_splits}.")
 
     skf = StratifiedKFold(n_splits=actual_n_splits, shuffle=True, random_state=config.seed)
-    fold_accuracies = []
-    # Use hidden_dim in print statement
+    # --- Store F1 scores ---
+    fold_f1_scores = []
     print(f"\nTrial {trial.number}: hidden={hidden_dim}, dr={dropout_rate:.2f}, lr={lr:.6f}, wd={weight_decay:.6f}")
 
     audio_dim, video_dim, pers_dim, num_classes = config.audio_dim, config.video_dim, config.pers_dim, config.num_classes
@@ -173,30 +174,28 @@ def objective(trial, full_train_dataset, config):
         cv_val_loader = DataLoader(cv_val_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
 
         try:
-            # --- Use EarlyFusionMLP ---
             model = EarlyFusionMLP(
                 audio_dim=audio_dim, video_dim=video_dim, pers_dim=pers_dim,
-                hidden_dim=hidden_dim, # Use hidden_dim here
-                num_classes=num_classes,
-                dropout_rate=dropout_rate
-            ).to(config.device) # Move model to device
+                hidden_dim=hidden_dim, num_classes=num_classes, dropout_rate=dropout_rate
+            ).to(config.device)
         except ValueError as e: print(f"Model init error: {e}"); continue
 
         optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-        # --- Move criterion to device ---
-        criterion = nn.CrossEntropyLoss().to(config.device)
-        best_fold_acc = 0.0
+        # --- Use Focal Loss ---
+        criterion = FocalLoss(gamma=int(config.gamma), weight=config.alpha).to(config.device)
+        # --- Track best F1 score for the fold ---
+        best_fold_f1 = 0.0
 
         for epoch in range(config.num_epochs_tuning):
             try:
-                # Pass the correct device
                 train_loss, train_acc = train_epoch(model, cv_train_loader, optimizer, criterion, config.device)
-                if train_acc is not None:
-                     # Pass the correct device
-                     val_loss, val_acc, _ = evaluate(model, cv_val_loader, criterion, config.device)
-                     if val_acc is not None:
-                          best_fold_acc = max(best_fold_acc, val_acc)
-                          trial.report(val_acc, global_step_counter)
+                if train_acc is not None: # Check if training was successful
+                     # --- Evaluate and get F1 score ---
+                     val_loss, val_acc, _, val_f1, _, _ = evaluate(model, cv_val_loader, criterion, config.device)
+                     if val_f1 is not None: # Check if evaluation was successful
+                          best_fold_f1 = max(best_fold_f1, val_f1)
+                          # --- Report F1 score to Optuna ---
+                          trial.report(val_f1, global_step_counter)
                           global_step_counter += 1
                           if trial.should_prune(): raise optuna.TrialPruned()
                      else: print(f"    Eval failed."); break
@@ -204,13 +203,14 @@ def objective(trial, full_train_dataset, config):
             except optuna.TrialPruned: raise
             except Exception as e_epoch: print(f"Error Fold {fold+1} Epoch {epoch+1}: {e_epoch}"); break
 
-        fold_accuracies.append(best_fold_acc)
-        print(f"  Fold {fold+1} Best Val Acc: {best_fold_acc:.4f}")
+        fold_f1_scores.append(best_fold_f1)
+        print(f"  Fold {fold+1} Best Val F1: {best_fold_f1:.4f}") # Log F1
 
-    average_accuracy = np.mean(fold_accuracies) if fold_accuracies else 0.0
-    print(f"Trial {trial.number} Avg CV Acc: {average_accuracy:.4f}")
-    if not fold_accuracies: print(f"Warn: Trial {trial.number} no folds complete."); return 0.0
-    return average_accuracy
+    # --- Calculate and return average F1 ---
+    average_f1 = np.mean(fold_f1_scores) if fold_f1_scores else 0.0
+    print(f"Trial {trial.number} Avg CV F1-score: {average_f1:.4f}")
+    if not fold_f1_scores: print(f"Warn: Trial {trial.number} no folds complete."); return 0.0
+    return average_f1 # Optuna maximizes this value
 
 
 # --- Main Execution ---
@@ -284,7 +284,7 @@ if __name__ == '__main__':
     if len(full_train_dataset) == 0 or len(val_dataset) == 0: print("Error: Datasets empty."); exit()
 
     # Optuna Tuning
-    print("\n--- Starting Hyperparameter Tuning ---")
+    print("\n--- Starting Hyperparameter Tuning (Optimizing Weighted F1-Score) ---")
     study = optuna.create_study(direction="maximize", pruner=optuna.pruners.MedianPruner())
     try: study.optimize(lambda trial: objective(trial, full_train_dataset, config), n_trials=config.optuna_trials)
     except Exception as e: print(f"Optuna error: {e}");
@@ -293,7 +293,8 @@ if __name__ == '__main__':
     completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
     if not completed_trials: print("No Optuna trials completed."); exit()
     best_trial = study.best_trial; best_params = best_trial.params
-    print(f"Best trial #{best_trial.number}: Acc={best_trial.value:.4f}"); [print(f"  {k}: {v}") for k, v in best_params.items()]
+    # --- Log F1 score ---
+    print(f"Best trial #{best_trial.number}: Weighted F1={best_trial.value:.4f}"); [print(f"  {k}: {v}") for k, v in best_params.items()]
 
     # Final Training
     print("\n--- Training Final Model ---")
@@ -349,24 +350,36 @@ if __name__ == '__main__':
     if len(final_train_loader) == 0 or len(final_val_loader) == 0: print("Error: Final loaders empty."); exit()
 
     final_optimizer = optim.Adam(final_model.parameters(), lr=best_params['lr'], weight_decay=best_params['weight_decay'])
-    # --- Move criterion to device ---
-    final_criterion = nn.CrossEntropyLoss().to(config.device)
-    best_final_val_acc, best_epoch = 0.0, -1
+    # --- Use Focal Loss and move criterion to device ---
+    final_criterion = FocalLoss(gamma=int(config.gamma), weight=config.alpha).to(config.device)
+    # --- Track best F1 score ---
+    best_final_val_f1 = 0.0
+    best_epoch = -1
+
+    # --- Add explicit model.to(device) before final training loop ---
+    print(f"Ensuring final model is on device {config.device} before training...")
+    final_model.to(config.device)
+    # --- End add explicit model.to(device) ---
 
     for epoch in range(config.num_epochs_final):
         try:
             # Pass the correct device from config
             train_loss, train_acc = train_epoch(final_model, final_train_loader, final_optimizer, final_criterion, config.device)
-            val_loss, val_acc, val_report = evaluate(final_model, final_val_loader, final_criterion, config.device)
-            print(f"Epoch {epoch+1}/{config.num_epochs_final}: Train Loss={train_loss:.4f}, Acc={train_acc:.4f} | Val Loss={val_loss:.4f}, Acc={val_acc:.4f}")
-            if val_acc is not None and val_acc > best_final_val_acc:
-                best_final_val_acc, best_epoch = val_acc, epoch + 1
-                try: torch.save(final_model.state_dict(), config.model_save_path); print(f"  -> Saved best model (Epoch {best_epoch}, Val Acc: {best_final_val_acc:.4f})")
+            # --- Capture all return values from evaluate, including F1 ---
+            val_loss, val_acc, val_report_dict, val_f1, _, _ = evaluate(final_model, final_val_loader, final_criterion, config.device)
+            # --- Log F1 score ---
+            print(f"Epoch {epoch+1}/{config.num_epochs_final}: Train Loss={train_loss:.4f}, Acc={train_acc:.4f} | Val Loss={val_loss:.4f}, Acc={val_acc:.4f}, F1w={val_f1:.4f}")
+            # --- Save based on F1 score ---
+            if val_f1 is not None and val_f1 > best_final_val_f1:
+                best_final_val_f1 = val_f1
+                best_epoch = epoch + 1
+                try: torch.save(final_model.state_dict(), config.model_save_path); print(f"  -> Saved best model (Epoch {best_epoch}, Val F1w: {best_final_val_f1:.4f})")
                 except Exception as e_save: print(f"Save error: {e_save}")
         except Exception as e_final_epoch: print(f"Error final epoch {epoch+1}: {e_final_epoch}"); break
 
     print("\n--- Final Training Complete ---")
-    print(f"Best Val Acc ({best_final_val_acc:.4f}) at epoch {best_epoch}")
+    # --- Report best F1 ---
+    print(f"Best validation F1-score ({best_final_val_f1:.4f}) achieved at epoch {best_epoch}")
 
     # Evaluation
     print("\n--- Evaluating Best Saved Model ---")
@@ -381,9 +394,39 @@ if __name__ == '__main__':
             ).to(config.device) # Move model to device
             eval_model.load_state_dict(torch.load(config.model_save_path, map_location=config.device))
             eval_model.eval()
-            # Pass the correct device from config
-            _, final_acc, final_report = evaluate(eval_model, final_val_loader, final_criterion, config.device)
-            print(f"Final Best Model Val Acc: {final_acc:.4f}")
-            print("Classification Report:"); print(json.dumps(final_report, indent=2))
+            # --- Capture all return values from evaluate ---
+            _, final_acc, final_report_dict, final_f1, final_true_labels, final_preds = evaluate(eval_model, final_val_loader, final_criterion, config.device)
+
+            print(f"Final Best Model Validation Accuracy: {final_acc:.4f}")
+            print(f"Final Best Model Validation Weighted F1-Score: {final_f1:.4f}") # Print F1
+            print("Classification Report:")
+            # --- Generate and print text report ---
+            report_str = classification_report(final_true_labels, final_preds, zero_division=0)
+            print(report_str)
+
+            # --- Calculate and Print Confusion Matrix ---
+            if final_true_labels and final_preds: # Check if lists are not empty
+                 cm = confusion_matrix(final_true_labels, final_preds)
+                 print("\nFinal Best Model Confusion Matrix:")
+                 print(cm)
+
+                 # Optional: Plot confusion matrix
+                 try:
+                     plt.figure(figsize=(8, 6))
+                     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=range(config.num_classes), yticklabels=range(config.num_classes))
+                     plt.xlabel('Predicted Label')
+                     plt.ylabel('True Label')
+                     plt.title('Confusion Matrix')
+                     # Save or show the plot
+                     plt.savefig('confusion_matrix_early_fusion.png') # Updated filename
+                     print("\nConfusion Matrix plot saved as confusion_matrix_early_fusion.png")
+                     plt.close() # Close the plot figure
+                 except Exception as e_plot:
+                     print(f"\nCould not plot confusion matrix: {e_plot}")
+            else:
+                 print("\nCould not generate confusion matrix (no predictions or labels found).")
+            # --- End Confusion Matrix ---
+
         except Exception as e: print(f"Error evaluating best model: {e}")
     else: print("Best model not saved/found. Skipping final evaluation.")
+

@@ -7,18 +7,21 @@ import os
 import json
 import optuna # For hyperparameter tuning
 from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+# Import f1_score specifically if needed, but classification_report already contains it
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score
 from DataClasses.config import Config
 from DataLoaders.audioVisualLoader import create_audio_visual_loader
 
 from DataSets.audioVisualDataset import AudioVisualDataset
 from Models.early_fusion_mlp import EarlyFusionMLP
 from Models.inter_fusion_mlp import IntermediateFusionMLP
+from Utils.focal_loss import FocalLoss
 from Utils.test_val_split import train_val_split1, train_val_split2
 
 import torchinfo
 
 # --- Training and Evaluation Functions (with device placement fix) ---
+# UNCHANGED FROM ORIGINAL
 def train_epoch(model, dataloader, optimizer, criterion, device):
     """Trains the model for one epoch."""
     model.train()
@@ -64,6 +67,7 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
     return avg_loss, accuracy
 
 # --- Updated evaluate function to return labels and predictions ---
+# UNCHANGED FROM ORIGINAL
 def evaluate(model, dataloader, criterion, device):
     """Evaluates the model on a given dataset."""
     model.eval()
@@ -104,12 +108,14 @@ def evaluate(model, dataloader, criterion, device):
 
     avg_loss = total_loss / num_samples if num_samples > 0 else 0
     accuracy = accuracy_score(all_labels, all_preds) if num_samples > 0 else 0
+    # Calculate classification report (includes weighted F1)
     report_dict = classification_report(all_labels, all_preds, zero_division=0, output_dict=True) if num_samples > 0 else {}
     # Return labels and preds along with other metrics
     return avg_loss, accuracy, report_dict, all_labels, all_preds
 
 
 # --- Optuna Objective Function with Cross-Validation ---
+# MODIFIED TO OPTIMIZE FOR WEIGHTED F1-SCORE
 def objective(trial, full_train_dataset, config):
     # --- Suggest Hyperparameters ---
     modality_hidden_dim = trial.suggest_categorical("modality_hidden_dim", [32, 64, 128])
@@ -129,26 +135,27 @@ def objective(trial, full_train_dataset, config):
              if len(labels_np) != len(full_train_dataset.data): print(f"Warn: Extracted {len(labels_np)}/{len(full_train_dataset.data)} labels.")
         else: raise ValueError("Cannot extract labels directly.")
     except Exception as e: # Fallback iteration
-         print(f"Direct label extract failed ({e}). Falling back.")
-         try:
-             temp_loader = DataLoader(full_train_dataset, batch_size=config.batch_size); labels_list = [b['emo_label'].numpy() for b in temp_loader if 'emo_label' in b];
-             if labels_list: labels_np = np.concatenate(labels_list)
-         except Exception as e_iter: print(f"Label iter failed: {e_iter}"); return 0.0
+        print(f"Direct label extract failed ({e}). Falling back.")
+        try:
+            temp_loader = DataLoader(full_train_dataset, batch_size=config.batch_size); labels_list = [b['emo_label'].numpy() for b in temp_loader if 'emo_label' in b];
+            if labels_list: labels_np = np.concatenate(labels_list)
+        except Exception as e_iter: print(f"Label iter failed: {e_iter}"); return 0.0
     if len(labels_np) == 0: print("Error: No labels extracted."); return 0.0
 
     unique_labels, counts = np.unique(labels_np, return_counts=True)
     if len(counts) == 0: print("Error: No unique labels."); return 0.0
     min_samples = np.min(counts) if len(counts) > 0 else 0
     actual_n_splits = min(n_splits, min_samples)
-    if actual_n_splits < 2: print(f"Warn: Smallest class ({min_samples}) too small for {n_splits}-CV."); return 0.0
+    if actual_n_splits < 2: print(f"Warn: Smallest class ({min_samples}) too small for {n_splits}-CV."); return 0.0 # Return 0.0 F1 score
     if actual_n_splits < n_splits: print(f"Warn: Reducing CV folds to {actual_n_splits}.")
 
     skf = StratifiedKFold(n_splits=actual_n_splits, shuffle=True, random_state=config.seed)
-    fold_accuracies = []
+    # Store weighted F1 scores per fold
+    fold_f1_weighted_scores = []
     print(f"\nTrial {trial.number}: mod_hidden={modality_hidden_dim}, fusion_hidden={fusion_hidden_dim}, dr={dropout_rate:.2f}, lr={lr:.6f}, wd={weight_decay:.6f}")
 
     audio_dim, video_dim, pers_dim, num_classes = config.audio_dim, config.video_dim, config.pers_dim, config.num_classes
-    if not all([audio_dim, video_dim, pers_dim, num_classes]): print("Error: Invalid dims."); return 0.0
+    if not all([audio_dim, video_dim, pers_dim, num_classes]): print("Error: Invalid dims."); return 0.0 # Return 0.0 F1 score
 
     split_indices = np.arange(len(labels_np))
     global_step_counter = 0
@@ -183,36 +190,59 @@ def objective(trial, full_train_dataset, config):
 
         optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
         # --- Move criterion to device ---
-        criterion = nn.CrossEntropyLoss().to(config.device)
-        best_fold_acc = 0.0
+        criterion = FocalLoss(gamma=int(config.gamma), weight=config.alpha).to(config.device)
+        # Track best weighted F1 score for this fold
+        best_fold_f1_weighted = 0.0
 
         for epoch in range(config.num_epochs_tuning):
             try:
                 # Pass the correct device
                 train_loss, train_acc = train_epoch(model, cv_train_loader, optimizer, criterion, config.device)
-                if train_acc is not None:
-                     # Pass the correct device, capture labels/preds if needed, ignore here
-                     val_loss, val_acc, _, _, _ = evaluate(model, cv_val_loader, criterion, config.device)
-                     if val_acc is not None:
-                          best_fold_acc = max(best_fold_acc, val_acc)
-                          trial.report(val_acc, global_step_counter)
-                          global_step_counter += 1
-                          if trial.should_prune(): raise optuna.TrialPruned()
-                     else: print(f"    Eval failed."); break
-                else: print(f"    Train failed."); break
-            except optuna.TrialPruned: raise
-            except Exception as e_epoch: print(f"Error Fold {fold+1} Epoch {epoch+1}: {e_epoch}"); break
+                if train_acc is not None: # Check if training succeeded
+                     # Pass the correct device, capture the classification report
+                     val_loss, val_acc, val_report, _, _ = evaluate(model, cv_val_loader, criterion, config.device)
 
-        fold_accuracies.append(best_fold_acc)
-        print(f"  Fold {fold+1} Best Val Acc: {best_fold_acc:.4f}")
+                     # Extract weighted F1 score
+                     current_f1_weighted = 0.0
+                     if val_report and 'weighted avg' in val_report and 'f1-score' in val_report['weighted avg']:
+                         current_f1_weighted = val_report['weighted avg']['f1-score']
+                     else:
+                         print(f"  Warn: Could not extract weighted F1 for epoch {epoch+1}. Report: {val_report}")
 
-    average_accuracy = np.mean(fold_accuracies) if fold_accuracies else 0.0
-    print(f"Trial {trial.number} Avg CV Acc: {average_accuracy:.4f}")
-    if not fold_accuracies: print(f"Warn: Trial {trial.number} no folds complete."); return 0.0
-    return average_accuracy
+                     # Update best F1 for the fold
+                     best_fold_f1_weighted = max(best_fold_f1_weighted, current_f1_weighted)
+
+                     # Report the current weighted F1 score to Optuna for pruning
+                     trial.report(current_f1_weighted, global_step_counter)
+                     global_step_counter += 1
+
+                     # Check for pruning
+                     if trial.should_prune():
+                         raise optuna.TrialPruned()
+                else:
+                    print(f"    Train failed for epoch {epoch+1}. Stopping fold.")
+                    break # Stop training this fold if training fails
+            except optuna.TrialPruned:
+                raise # Re-raise prune exception
+            except Exception as e_epoch:
+                print(f"Error Fold {fold+1} Epoch {epoch+1}: {e_epoch}")
+                break # Stop training this fold on other errors
+
+        # Append the best weighted F1 score achieved in this fold
+        fold_f1_weighted_scores.append(best_fold_f1_weighted)
+        print(f"  Fold {fold+1} Best Val Weighted F1: {best_fold_f1_weighted:.4f}")
+
+    # Calculate the average weighted F1 score across folds
+    average_f1_weighted = np.mean(fold_f1_weighted_scores) if fold_f1_weighted_scores else 0.0
+    print(f"Trial {trial.number} Avg CV Weighted F1: {average_f1_weighted:.4f}")
+    if not fold_f1_weighted_scores: print(f"Warn: Trial {trial.number} no folds completed successfully."); return 0.0
+
+    # Return the average weighted F1 score for Optuna to maximize
+    return average_f1_weighted
 
 
 # --- Main Execution ---
+# UNCHANGED FROM ORIGINAL
 if __name__ == '__main__':
 
     config = Config.from_json('config.json')
@@ -283,7 +313,8 @@ if __name__ == '__main__':
     if len(full_train_dataset) == 0 or len(val_dataset) == 0: print("Error: Datasets empty."); exit()
 
     # Optuna Tuning
-    print("\n--- Starting Hyperparameter Tuning ---")
+    print("\n--- Starting Hyperparameter Tuning (Optimizing for Weighted F1) ---") # Updated print
+    # Use 'maximize' as we want the highest F1 score
     study = optuna.create_study(direction="maximize", pruner=optuna.pruners.MedianPruner())
     try: study.optimize(lambda trial: objective(trial, full_train_dataset, config), n_trials=config.optuna_trials)
     except Exception as e: print(f"Optuna error: {e}");
@@ -292,10 +323,11 @@ if __name__ == '__main__':
     completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
     if not completed_trials: print("No Optuna trials completed."); exit()
     best_trial = study.best_trial; best_params = best_trial.params
-    print(f"Best trial #{best_trial.number}: Acc={best_trial.value:.4f}"); [print(f"  {k}: {v}") for k, v in best_params.items()]
+    # Print the best Weighted F1 found by Optuna
+    print(f"Best trial #{best_trial.number}: Weighted F1={best_trial.value:.4f}"); [print(f"  {k}: {v}") for k, v in best_params.items()]
 
     # Final Training
-    print("\n--- Training Final Model ---")
+    print("\n--- Training Final Model (Using Best Hyperparameters Found by Optuna) ---") # Updated print
     try:
         # --- Use IntermediateFusionMLP ---
         final_model = IntermediateFusionMLP(
@@ -333,7 +365,7 @@ if __name__ == '__main__':
                  num_classes=config.num_classes, dropout_rate=best_params['dropout_rate']
             ).to('cpu') # Use CPU for summary
             torchinfo.summary(summary_model, input_size=[example_audio_shape, example_video_shape, example_pers_shape],
-                              col_names=["input_size", "output_size", "num_params", "mult_adds"], depth=3, verbose=0)
+                               col_names=["input_size", "output_size", "num_params", "mult_adds"], depth=3, verbose=0)
             print(summary_model)
             del summary_model
         except Exception as e_summary:
@@ -351,7 +383,8 @@ if __name__ == '__main__':
 
     final_optimizer = optim.Adam(final_model.parameters(), lr=best_params['lr'], weight_decay=best_params['weight_decay'])
     # --- Move criterion to device ---
-    final_criterion = nn.CrossEntropyLoss().to(config.device)
+    final_criterion = FocalLoss(gamma=int(config.gamma), weight=config.alpha).to(config.device)
+    # Still track best validation *accuracy* during final training to save the best model checkpoint
     best_final_val_acc, best_epoch = 0.0, -1
 
     # --- Add explicit model.to(device) before final training loop ---
@@ -364,19 +397,21 @@ if __name__ == '__main__':
             # Pass the correct device from config
             train_loss, train_acc = train_epoch(final_model, final_train_loader, final_optimizer, final_criterion, config.device)
             # --- Capture all return values from evaluate ---
+            # Note: We still use accuracy here to decide which epoch's model weights to save,
+            #       as per the original script's logic. Optuna was only used for hyperparameter *selection*.
             val_loss, val_acc, val_report, _, _ = evaluate(final_model, final_val_loader, final_criterion, config.device)
             print(f"Epoch {epoch+1}/{config.num_epochs_final}: Train Loss={train_loss:.4f}, Acc={train_acc:.4f} | Val Loss={val_loss:.4f}, Acc={val_acc:.4f}")
             if val_acc is not None and val_acc > best_final_val_acc:
-                best_final_val_acc, best_epoch = val_acc, epoch + 1
-                try: torch.save(final_model.state_dict(), config.model_save_path); print(f"  -> Saved best model (Epoch {best_epoch}, Val Acc: {best_final_val_acc:.4f})")
-                except Exception as e_save: print(f"Save error: {e_save}")
+                 best_final_val_acc, best_epoch = val_acc, epoch + 1
+                 try: torch.save(final_model.state_dict(), config.model_save_path); print(f"  -> Saved best model (Epoch {best_epoch}, Val Acc: {best_final_val_acc:.4f})")
+                 except Exception as e_save: print(f"Save error: {e_save}")
         except Exception as e_final_epoch: print(f"Error final epoch {epoch+1}: {e_final_epoch}"); break
 
     print("\n--- Final Training Complete ---")
-    print(f"Best Val Acc ({best_final_val_acc:.4f}) at epoch {best_epoch}")
+    print(f"Best Val Acc ({best_final_val_acc:.4f}) occurred at epoch {best_epoch}") # Report based on saving criterion
 
     # Evaluation
-    print("\n--- Evaluating Best Saved Model ---")
+    print("\n--- Evaluating Best Saved Model (based on validation accuracy during final training) ---") # Clarified print
     if best_epoch != -1 and os.path.exists(config.model_save_path):
         try:
             # --- Use IntermediateFusionMLP ---
@@ -390,10 +425,11 @@ if __name__ == '__main__':
             eval_model.load_state_dict(torch.load(config.model_save_path, map_location=config.device))
             eval_model.eval()
             # --- Capture all return values from evaluate ---
+            # Evaluate the final *saved* model and report its full metrics
             _, final_acc, final_report_dict, final_true_labels, final_preds = evaluate(eval_model, final_val_loader, final_criterion, config.device)
 
             print(f"Final Best Model Validation Accuracy: {final_acc:.4f}")
-            print("Final Best Model Classification Report:")
+            print("Final Best Model Classification Report (including weighted F1):") # Updated print
             # Use the report dict for printing
             print(json.dumps(final_report_dict, indent=2))
 
