@@ -30,13 +30,19 @@ class Config:
     num_classes: Optional[int] = None # Will be set from labelcount
 
     # For Early LSTM
-    gamma: float = 2.0
+    gamma: int = 2
     alpha: float = 0.25
 
     # for transformers
     optuna_timeout: Optional[int] = 3600  # Optional: Timeout for Optuna study in seconds (e.g., 1 hour). Use None for no timeout.
     class_weights: Optional[List[float]] = None 
     calculate_weights_dynamically: bool = True # Calculate weights from dataset if True
+    # Transformer (for Audio/Video in Late Fusion)
+    embed_dim: int = 128               # Internal embedding dimension for Transformer encoders
+    nhead: int = 4                     # Number of multi-head attention heads (must divide embed_dim)
+    num_encoder_layers: int = 2        # Number of stacked Transformer encoder layers
+    dim_feedforward: int = 512         # Dimension of the feedforward network within Transformer layers
+    fusion_hidden_dim: int = 128 
 
     @staticmethod
     def from_json(json_file_path: str) -> 'Config':

@@ -1,0 +1,388 @@
+kaushaldamania@Mac MPDD-revamp % python run_attention_fusion_transformer.py
+--- Script Start Time: 2025-04-29 21:32:56 ---
+--- Defining Experiment Parameters (Attention Fusion) ---
+
+--- Verifying Parameters ---
+Parameters verified.
+
+--- Setting Up Device and Seed ---
+Selected device: mps
+
+--- Checking Paths ---
+Found Dev JSON: /Users/kaushaldamania/deepl/MPDD-Elderly/Training/labels/Training_Validation_files.json
+Found Personalized Features: /Users/kaushaldamania/deepl/MPDD-Elderly/Training/individualEmbedding/descriptions_embeddings_with_ids.npy
+Found Audio Features Dir: /Users/kaushaldamania/deepl/MPDD-Elderly/Training/5s/Audio/wav2vec
+Found Video Features Dir: /Users/kaushaldamania/deepl/MPDD-Elderly/Training/5s/Visual/openface
+
+--- Splitting Data ---
+Data split: Train=292, Val=45
+
+--- Determining Feature Dimensions ---
+  Determined Audio Dim: 512 (from 100_A_1_audio_features.npy)
+  Determined Video Dim: 709 (from 100_V_1_video_features.npy)
+Final Dims Used: Audio=512, Video=709, Pers=1024, Classes=2
+
+--- Creating Datasets ---
+Dataset sizes: Train=292, Val=45
+
+--- Processing Class Distribution for Loss Weights and Sampler ---
+  Extracting labels from training dataset...
+  Attempted extraction for 292 samples, got 292 labels.
+  Training class counts: {0: 226, 1: 66}
+  Using MANUALLY DEFINED class weights for FocalLoss: [1.  2.5]
+  Attempting to create WeightedRandomSampler...
+  Created WeightedRandomSampler for training.
+
+--- Instantiating Model (Attention Fusion Version) ---
+Model instantiated successfully.
+
+--- Model Architecture & Parameters ---
+
+--- Creating DataLoaders (Batch Size: 16, Sampler: True) ---
+Train DataLoader length: 19, Val DataLoader length: 2
+
+--- Setting up Optimizer (AdamW) ---
+Using AdamW optimizer with Base LR=3e-05, Weight Decay=0.0001
+
+--- Setting up Loss Function (FocalLoss) ---
+Using FocalLoss with Gamma=3.0, Weights=tensor([1.0000, 2.5000], device='mps:0')
+
+--- Setting up LR Scheduler ---
+Using Cosine schedule with Warmup.
+Steps per epoch: 19
+Total steps: 1425, Warmup steps: 142
+LR Scheduler created.
+
+--- Starting Final Training Loop (75 epochs) ---
+
+Epoch 1/75
+  Learning Rate: 0.000e+00
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1966, Acc=0.5582 | Val Loss=0.1162, Acc=0.8222, Macro F1=0.7837
+  -> Macro F1 improved by 0.7837 (from 0.0000 to 0.7837). Saving model...
+  -> Saved best model to ./best_attn_fusion_transformer.pth
+  -> Saved best validation report to ./best_attn_fusion_transformer_best_report.json
+  Epoch completed in 1.54s
+
+Epoch 2/75
+  Learning Rate: 4.014e-06
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1849, Acc=0.5068 | Val Loss=0.1128, Acc=0.8000, Macro F1=0.7508
+  -> Macro F1 did not improve for 1 epoch(s). Best F1: 0.7837 at epoch 1.
+  Epoch completed in 0.66s
+
+Epoch 3/75
+  Learning Rate: 8.028e-06
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.2138, Acc=0.4760 | Val Loss=0.1079, Acc=0.6667, Macro F1=0.4996
+  -> Macro F1 did not improve for 2 epoch(s). Best F1: 0.7837 at epoch 1.
+  Epoch completed in 0.65s
+
+Epoch 4/75
+  Learning Rate: 1.204e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1933, Acc=0.5000 | Val Loss=0.1035, Acc=0.7111, Macro F1=0.4156
+  -> Macro F1 did not improve for 3 epoch(s). Best F1: 0.7837 at epoch 1.
+  Epoch completed in 0.64s
+
+Epoch 5/75
+  Learning Rate: 1.606e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1837, Acc=0.5000 | Val Loss=0.0970, Acc=0.7111, Macro F1=0.4156
+  -> Macro F1 did not improve for 4 epoch(s). Best F1: 0.7837 at epoch 1.
+  Epoch completed in 0.64s
+
+Epoch 6/75
+  Learning Rate: 2.007e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.2154, Acc=0.4932 | Val Loss=0.1054, Acc=0.6889, Macro F1=0.4079
+  -> Macro F1 did not improve for 5 epoch(s). Best F1: 0.7837 at epoch 1.
+  Epoch completed in 0.63s
+
+Epoch 7/75
+  Learning Rate: 2.408e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1948, Acc=0.4932 | Val Loss=0.1221, Acc=0.8444, Macro F1=0.8148
+  -> Macro F1 improved by 0.0312 (from 0.7837 to 0.8148). Saving model...
+  -> Saved best model to ./best_attn_fusion_transformer.pth
+  -> Saved best validation report to ./best_attn_fusion_transformer_best_report.json
+  Epoch completed in 0.66s
+
+Epoch 8/75
+  Learning Rate: 2.810e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1679, Acc=0.5274 | Val Loss=0.1156, Acc=0.6889, Macro F1=0.5500
+  -> Macro F1 did not improve for 1 epoch(s). Best F1: 0.8148 at epoch 7.
+  Epoch completed in 0.66s
+
+Epoch 9/75
+  Learning Rate: 3.000e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.2080, Acc=0.4897 | Val Loss=0.1197, Acc=0.7111, Macro F1=0.5963
+  -> Macro F1 did not improve for 2 epoch(s). Best F1: 0.8148 at epoch 7.
+  Epoch completed in 0.64s
+
+Epoch 10/75
+  Learning Rate: 2.996e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1882, Acc=0.5240 | Val Loss=0.1381, Acc=0.8444, Macro F1=0.8278
+  -> Macro F1 improved by 0.0130 (from 0.8148 to 0.8278). Saving model...
+  -> Saved best model to ./best_attn_fusion_transformer.pth
+  -> Saved best validation report to ./best_attn_fusion_transformer_best_report.json
+  Epoch completed in 0.66s
+
+Epoch 11/75
+  Learning Rate: 2.990e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1661, Acc=0.5274 | Val Loss=0.1621, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 1 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 12/75
+  Learning Rate: 2.980e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1790, Acc=0.5240 | Val Loss=0.1953, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 2 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 13/75
+  Learning Rate: 2.967e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.2191, Acc=0.4452 | Val Loss=0.1445, Acc=0.4889, Macro F1=0.4498
+  -> Macro F1 did not improve for 3 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.65s
+
+Epoch 14/75
+  Learning Rate: 2.951e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1644, Acc=0.5959 | Val Loss=0.2006, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 4 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.65s
+
+Epoch 15/75
+  Learning Rate: 2.931e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1820, Acc=0.5068 | Val Loss=0.1850, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 5 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 16/75
+  Learning Rate: 2.909e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1932, Acc=0.4932 | Val Loss=0.1943, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 6 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 17/75
+  Learning Rate: 2.884e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1856, Acc=0.4795 | Val Loss=0.1732, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 7 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 18/75
+  Learning Rate: 2.855e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1961, Acc=0.4897 | Val Loss=0.1605, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 8 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.65s
+
+Epoch 19/75
+  Learning Rate: 2.824e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1467, Acc=0.5582 | Val Loss=0.1580, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 9 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.65s
+
+Epoch 20/75
+  Learning Rate: 2.789e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1791, Acc=0.4966 | Val Loss=0.1289, Acc=0.7111, Macro F1=0.4156
+  -> Macro F1 did not improve for 10 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 21/75
+  Learning Rate: 2.752e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1955, Acc=0.4760 | Val Loss=0.1182, Acc=0.7111, Macro F1=0.4156
+  -> Macro F1 did not improve for 11 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 22/75
+  Learning Rate: 2.713e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1719, Acc=0.4966 | Val Loss=0.1408, Acc=0.7111, Macro F1=0.4156
+  -> Macro F1 did not improve for 12 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.65s
+
+Epoch 23/75
+  Learning Rate: 2.670e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1857, Acc=0.4829 | Val Loss=0.1424, Acc=0.7111, Macro F1=0.4156
+  -> Macro F1 did not improve for 13 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 24/75
+  Learning Rate: 2.625e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1688, Acc=0.4966 | Val Loss=0.1641, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 14 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 25/75
+  Learning Rate: 2.578e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1721, Acc=0.5034 | Val Loss=0.1697, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 15 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 26/75
+  Learning Rate: 2.528e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1863, Acc=0.4795 | Val Loss=0.1699, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 16 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 27/75
+  Learning Rate: 2.476e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1811, Acc=0.4966 | Val Loss=0.2293, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 17 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 28/75
+  Learning Rate: 2.422e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1509, Acc=0.5308 | Val Loss=0.1936, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 18 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.65s
+
+Epoch 29/75
+  Learning Rate: 2.366e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1944, Acc=0.4452 | Val Loss=0.1868, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 19 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 30/75
+  Learning Rate: 2.309e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1740, Acc=0.4726 | Val Loss=0.1707, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 20 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 31/75
+  Learning Rate: 2.249e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1609, Acc=0.5479 | Val Loss=0.1815, Acc=0.2889, Macro F1=0.2241
+  -> Macro F1 did not improve for 21 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.65s
+
+Epoch 32/75
+  Learning Rate: 2.188e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1747, Acc=0.4795 | Val Loss=0.1555, Acc=0.3333, Macro F1=0.3168
+  -> Macro F1 did not improve for 22 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.65s
+
+Epoch 33/75
+  Learning Rate: 2.125e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1754, Acc=0.5034 | Val Loss=0.1375, Acc=0.7111, Macro F1=0.4156
+  -> Macro F1 did not improve for 23 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.65s
+
+Epoch 34/75
+  Learning Rate: 2.061e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1700, Acc=0.5034 | Val Loss=0.1516, Acc=0.5333, Macro F1=0.4833
+  -> Macro F1 did not improve for 24 epoch(s). Best F1: 0.8278 at epoch 10.
+  Epoch completed in 0.64s
+
+Epoch 35/75
+  Learning Rate: 1.996e-05
+  Starting training...
+  Starting validation...
+  Results: Train Loss=0.1698, Acc=0.5068 | Val Loss=0.1502, Acc=0.6222, Macro F1=0.5036
+  -> Macro F1 did not improve for 25 epoch(s). Best F1: 0.8278 at epoch 10.
+
+Early stopping triggered after 25 epochs without validation Macro F1 improvement.
+
+--- Final Training Complete ---
+Total training time: 0m 23s
+Best Validation Macro F1 score (0.8278) achieved at epoch 10
+Training log saved to ./best_attn_fusion_transformer_training_log.json
+
+--- Evaluating Best Saved Model on Validation Set ---
+Loading best model state from epoch 10 saved at ./best_attn_fusion_transformer.pth
+Model loaded successfully.
+Running final evaluation...
+
+Final Evaluation Results (using model from epoch 10):
+  Loss: 0.1381
+  Accuracy: 0.8444
+  Macro F1: 0.8278
+  Classification Report:
+{
+  "Class_0": {
+    "precision": 0.9629629629629629,
+    "recall": 0.8125,
+    "f1-score": 0.8813559322033898,
+    "support": 32.0
+  },
+  "Class_1": {
+    "precision": 0.6666666666666666,
+    "recall": 0.9230769230769231,
+    "f1-score": 0.7741935483870968,
+    "support": 13.0
+  },
+  "accuracy": 0.8444444444444444,
+  "macro avg": {
+    "precision": 0.8148148148148148,
+    "recall": 0.8677884615384616,
+    "f1-score": 0.8277747402952433,
+    "support": 45.0
+  },
+  "weighted avg": {
+    "precision": 0.8773662551440329,
+    "recall": 0.8444444444444444,
+    "f1-score": 0.8503979102120163,
+    "support": 45.0
+  }
+}
+
+--- Script End Time: 2025-04-29 21:33:20 ---

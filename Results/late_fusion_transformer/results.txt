@@ -1,0 +1,86 @@
+--- Optuna Study Complete ---
+Best trial #38: Achieved MACRO F1 = 0.5888
+Best Hyperparameters Found:
+  lr: 0.000059
+  weight_decay: 0.000943
+  transformer_config_idx: 0
+  transformer_num_layers: 1
+  transformer_dropout: 0.400000
+  mlp_hidden_dim: 256
+  mlp_dropout: 0.400000
+  gamma: 1.500000
+
+--- Training Final Model with Best Hyperparameters ---
+Initialized TransformerLateFusion:
+  - Input Dims: Audio=512, Video=709, Pers=1024
+  - Transformer: Embed=64, Heads=2, Layers=1, Dropout=0.40
+  - Final MLP: Hidden=256, Dropout=0.40
+  - Output Classes: 2
+
+--- Final Model Architecture & Parameters ---
+Initialized TransformerLateFusion:
+  - Input Dims: Audio=512, Video=709, Pers=1024
+  - Transformer: Embed=64, Heads=2, Layers=1, Dropout=0.40
+  - Final MLP: Hidden=256, Dropout=0.40
+  - Output Classes: 2
+Final training using Focal Loss (gamma=1.50, weights=DYNAMICALLY COMPUTED)
+Ensuring final model is on device mps before training loop...
+--- Starting Final Training Loop (Saving best model based on Validation Macro F1) ---
+Epoch 1/50: TrainLoss=0.7403, Acc=0.4486 | ValLoss=0.3301, Acc=0.2889, F1m=0.2241 | LR=5.9e-05
+  -> Saved best model to ./best_transformer_late_fusion_macro.pth (Epoch 1, Val F1m: 0.2241)
+Epoch 2/50: TrainLoss=0.4839, Acc=0.5137 | ValLoss=0.6441, Acc=0.7111, F1m=0.4156 | LR=5.9e-05
+  -> Saved best model to ./best_transformer_late_fusion_macro.pth (Epoch 2, Val F1m: 0.4156)
+Epoch 3/50: TrainLoss=0.5361, Acc=0.4589 | ValLoss=0.6890, Acc=0.2889, F1m=0.2241 | LR=5.9e-05
+Epoch 4/50: TrainLoss=0.4833, Acc=0.4178 | ValLoss=0.2951, Acc=0.2889, F1m=0.2241 | LR=5.9e-05
+Epoch 5/50: TrainLoss=0.4099, Acc=0.4041 | ValLoss=0.3044, Acc=0.2889, F1m=0.2241 | LR=5.9e-05
+Epoch 6/50: TrainLoss=0.3131, Acc=0.4315 | ValLoss=0.3087, Acc=0.2889, F1m=0.2241 | LR=5.9e-05
+Epoch 7/50: TrainLoss=0.3519, Acc=0.3836 | ValLoss=0.3072, Acc=0.2889, F1m=0.2241 | LR=5.9e-05
+Epoch 8/50: TrainLoss=0.2983, Acc=0.4281 | ValLoss=0.2938, Acc=0.2889, F1m=0.2241 | LR=5.9e-05
+Epoch 9/50: TrainLoss=0.2898, Acc=0.3527 | ValLoss=0.3086, Acc=0.3333, F1m=0.2910 | LR=1.2e-05
+Epoch 10/50: TrainLoss=0.2895, Acc=0.3973 | ValLoss=0.2920, Acc=0.2889, F1m=0.2241 | LR=1.2e-05
+Epoch 11/50: TrainLoss=0.2724, Acc=0.3870 | ValLoss=0.3260, Acc=0.4667, F1m=0.4600 | LR=1.2e-05
+  -> Saved best model to ./best_transformer_late_fusion_macro.pth (Epoch 11, Val F1m: 0.4600)
+Epoch 12/50: TrainLoss=0.2812, Acc=0.4247 | ValLoss=0.3252, Acc=0.4000, F1m=0.3804 | LR=1.2e-05
+Epoch 13/50: TrainLoss=0.2716, Acc=0.4247 | ValLoss=0.3199, Acc=0.3556, F1m=0.3221 | LR=1.2e-05
+Epoch 14/50: TrainLoss=0.2926, Acc=0.3288 | ValLoss=0.3123, Acc=0.2889, F1m=0.2241 | LR=1.2e-05
+Epoch 15/50: TrainLoss=0.2513, Acc=0.4007 | ValLoss=0.3123, Acc=0.2889, F1m=0.2241 | LR=1.2e-05
+Epoch 16/50: TrainLoss=0.2663, Acc=0.4041 | ValLoss=0.3064, Acc=0.2889, F1m=0.2241 | LR=1.2e-05
+Epoch 17/50: TrainLoss=0.2626, Acc=0.4212 | ValLoss=0.3047, Acc=0.2889, F1m=0.2241 | LR=1.2e-05
+Epoch 18/50: TrainLoss=0.2460, Acc=0.3664 | ValLoss=0.3114, Acc=0.2889, F1m=0.2241 | LR=2.4e-06
+Epoch 19/50: TrainLoss=0.2539, Acc=0.4247 | ValLoss=0.3149, Acc=0.3111, F1m=0.2584 | LR=2.4e-06
+Epoch 20/50: TrainLoss=0.2589, Acc=0.3973 | ValLoss=0.3108, Acc=0.2889, F1m=0.2241 | LR=2.4e-06
+Epoch 21/50: TrainLoss=0.2628, Acc=0.4007 | ValLoss=0.3146, Acc=0.3111, F1m=0.2584 | LR=2.4e-06
+Early stopping final training at epoch 21. Patience: 10/10, LR: 2.4e-06
+
+--- Final Training Complete ---
+Best validation MACRO F1-score (0.4600) achieved at epoch 11
+
+--- Evaluating Best Saved Model (based on Macro F1) on Validation Set ---
+Initialized TransformerLateFusion:
+  - Input Dims: Audio=512, Video=709, Pers=1024
+  - Transformer: Embed=64, Heads=2, Layers=1, Dropout=0.40
+  - Final MLP: Hidden=256, Dropout=0.40
+  - Output Classes: 2
+
+--- Final Validation Results (Best Model) ---
+Validation Loss: 0.3260
+Validation Accuracy: 0.4667
+Validation Weighted F1-Score: 0.4347
+Validation MACRO F1-Score: 0.4600
+
+Classification Report:
+              precision    recall  f1-score   support
+
+     Class 0       1.00      0.25      0.40        32
+     Class 1       0.35      1.00      0.52        13
+
+    accuracy                           0.47        45
+   macro avg       0.68      0.62      0.46        45
+weighted avg       0.81      0.47      0.43        45
+
+
+Final Confusion Matrix:
+[[ 8 24]
+ [ 0 13]]
+
+Confusion Matrix plot saved as confusion_matrix_transformer_late_fusion_macro.png
