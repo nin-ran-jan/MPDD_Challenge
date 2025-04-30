@@ -9,8 +9,6 @@ import optuna # For hyperparameter tuning
 from sklearn.model_selection import StratifiedKFold
 # --- Import f1_score ---
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score
-import matplotlib.pyplot as plt # For plotting confusion matrix
-import seaborn as sns # For plotting confusion matrix
 
 
 from dataclasses import dataclass, field # Assuming Config is a dataclass
@@ -403,29 +401,6 @@ if __name__ == '__main__':
             # --- Generate and print text report ---
             report_str = classification_report(final_true_labels, final_preds, zero_division=0)
             print(report_str)
-
-            # --- Calculate and Print Confusion Matrix ---
-            if final_true_labels and final_preds: # Check if lists are not empty
-                 cm = confusion_matrix(final_true_labels, final_preds)
-                 print("\nFinal Best Model Confusion Matrix:")
-                 print(cm)
-
-                 # Optional: Plot confusion matrix
-                 try:
-                     plt.figure(figsize=(8, 6))
-                     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=range(config.num_classes), yticklabels=range(config.num_classes))
-                     plt.xlabel('Predicted Label')
-                     plt.ylabel('True Label')
-                     plt.title('Confusion Matrix')
-                     # Save or show the plot
-                     plt.savefig('confusion_matrix_early_fusion.png') # Updated filename
-                     print("\nConfusion Matrix plot saved as confusion_matrix_early_fusion.png")
-                     plt.close() # Close the plot figure
-                 except Exception as e_plot:
-                     print(f"\nCould not plot confusion matrix: {e_plot}")
-            else:
-                 print("\nCould not generate confusion matrix (no predictions or labels found).")
-            # --- End Confusion Matrix ---
 
         except Exception as e: print(f"Error evaluating best model: {e}")
     else: print("Best model not saved/found. Skipping final evaluation.")

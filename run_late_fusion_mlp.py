@@ -12,8 +12,7 @@ from DataClasses.config import Config
 from DataLoaders.audioVisualLoader import create_audio_visual_loader
 
 from DataSets.audioVisualDataset import AudioVisualDataset
-from Models.attention_fusion_mlp import AttentionFusionMLP
-# from Models.early_fusion_mlp import EarlyFusionMLP
+from Models.late_fusion_mlp import LateFusionMLP
 from Utils.test_val_split import train_val_split1, train_val_split2
 
 import torchinfo
@@ -96,11 +95,11 @@ def evaluate(model, dataloader, criterion, device):
 
 
 # # --- Optuna Objective Function with Cross-Validation ---
-# # (objective function remains the same as previous version, but will use AttentionFusionMLP)
+# # (objective function remains the same as previous version, but will use LateFusionMLP)
 # def objective(trial, full_train_dataset, config):
 #     # --- Suggest Hyperparameters ---
 #     projection_dim = trial.suggest_categorical("projection_dim", [32, 64, 128]) # Dim for common space
-#     fusion_hidden_dim = trial.suggest_categorical("fusion_hidden_dim", [64, 128, 256]) # Dim after attention
+#     fusion_hidden_dim = trial.suggest_categorical("fusion_hidden_dim", [64, 128, 256]) # Dim after Late
 #     dropout_rate = trial.suggest_float("dropout_rate", 0.1, 0.7, step=0.1)
 #     lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
 #     weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-3, log=True)
@@ -157,8 +156,8 @@ def evaluate(model, dataloader, criterion, device):
 #         cv_val_loader = DataLoader(cv_val_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
 
 #         try:
-#             # --- Use AttentionFusionMLP ---
-#             model = AttentionFusionMLP(
+#             # --- Use LateFusionMLP ---
+#             model = LateFusionMLP(
 #                 audio_dim=audio_dim, video_dim=video_dim, pers_dim=pers_dim,
 #                 projection_dim=projection_dim,
 #                 fusion_hidden_dim=fusion_hidden_dim,
@@ -290,11 +289,10 @@ if __name__ == '__main__':
     # Final Training
     print("\n--- Training Final Model ---")
     try:
-        # --- Use AttentionFusionMLP ---
-        final_model = AttentionFusionMLP(
+        # --- Use LateFusionMLP ---
+        final_model = LateFusionMLP(
             audio_dim=config.audio_dim, video_dim=config.video_dim, pers_dim=config.pers_dim,
-            projection_dim=128,
-            fusion_hidden_dim=best_params['hidden_dim'],
+            hidden_dim=best_params['hidden_dim'],
             num_classes=config.num_classes,
             dropout_rate=best_params['dropout_rate']
         ).to(config.device) # Move model to device
@@ -321,11 +319,12 @@ if __name__ == '__main__':
         example_video_shape = (config.batch_size, config.feature_max_len, config.video_dim)
         example_pers_shape = (config.batch_size, config.pers_dim)
         try:
-            summary_model = AttentionFusionMLP(
+            summary_model = LateFusionMLP(
                 audio_dim=config.audio_dim, video_dim=config.video_dim, pers_dim=config.pers_dim,
-                projection_dim=128, fusion_hidden_dim=best_params['hidden_dim'],
-                num_classes=config.num_classes, dropout_rate=best_params['dropout_rate']
-            ).to('cpu') # Use CPU for summary
+                hidden_dim=best_params['hidden_dim'],
+                num_classes=config.num_classes,
+                dropout_rate=best_params['dropout_rate']
+            ).to(config.device) # Move model to device
             torchinfo.summary(summary_model, input_size=[example_audio_shape, example_video_shape, example_pers_shape],
                               col_names=["input_size", "output_size", "num_params", "mult_adds"], depth=3, verbose=0)
             print(summary_model)
@@ -367,11 +366,10 @@ if __name__ == '__main__':
     print("\n--- Evaluating Best Saved Model ---")
     if best_epoch != -1 and os.path.exists(config.model_save_path):
         try:
-            # --- Use AttentionFusionMLP ---
-            eval_model = AttentionFusionMLP(
+            # --- Use LateFusionMLP ---
+            eval_model = LateFusionMLP(
                 audio_dim=config.audio_dim, video_dim=config.video_dim, pers_dim=config.pers_dim,
-                projection_dim=128,
-                fusion_hidden_dim=best_params['hidden_dim'],
+                hidden_dim=best_params['hidden_dim'],
                 num_classes=config.num_classes,
                 dropout_rate=best_params['dropout_rate']
             ).to(config.device) # Move model to device

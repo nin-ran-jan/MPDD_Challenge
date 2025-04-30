@@ -1,0 +1,114 @@
+Using CUDA: NVIDIA L4
+Splitting data...
+Data split: Train=293, Val=44
+Determining feature dimensions...
+  Audio Dim: 512
+  Video Dim: 709
+Final Dims: A=512, V=709, P=1024, Cls=2
+Creating Datasets...
+
+--- Training Final Model ---
+Final model is on device: cuda:0
+
+--- Final Model Architecture & Parameters ---
+AttentionFusionMLP(
+  (audio_proj): Linear(in_features=512, out_features=128, bias=True)
+  (video_proj): Linear(in_features=709, out_features=128, bias=True)
+  (pers_proj): Linear(in_features=1024, out_features=128, bias=True)
+  (attention_scorer): Sequential(
+    (0): Linear(in_features=128, out_features=64, bias=True)
+    (1): Tanh()
+    (2): Linear(in_features=64, out_features=1, bias=True)
+  )
+  (fusion_layer): Sequential(
+    (0): Linear(in_features=128, out_features=256, bias=True)
+    (1): ReLU()
+    (2): Dropout(p=0.2, inplace=False)
+  )
+  (classifier): Linear(in_features=256, out_features=2, bias=True)
+)
+Epoch 1/50: Train Loss=51.7222, Acc=0.6519 | Val Loss=2.0051, Acc=0.6591
+  -> Saved best model (Epoch 1, Val Acc: 0.6591)
+Epoch 2/50: Train Loss=13.3897, Acc=0.6928 | Val Loss=32.7153, Acc=0.6364
+Epoch 3/50: Train Loss=4.3903, Acc=0.6519 | Val Loss=26.0595, Acc=0.6364
+Epoch 4/50: Train Loss=3.7955, Acc=0.6724 | Val Loss=19.7707, Acc=0.6364
+Epoch 5/50: Train Loss=5.7344, Acc=0.6894 | Val Loss=23.0103, Acc=0.6364
+Epoch 6/50: Train Loss=6.9318, Acc=0.7304 | Val Loss=32.3224, Acc=0.6364
+Epoch 7/50: Train Loss=2.1975, Acc=0.7713 | Val Loss=27.6218, Acc=0.6364
+Epoch 8/50: Train Loss=2.8930, Acc=0.7304 | Val Loss=21.9834, Acc=0.6364
+Epoch 9/50: Train Loss=3.3540, Acc=0.7543 | Val Loss=17.2665, Acc=0.6364
+Epoch 10/50: Train Loss=1.8291, Acc=0.7577 | Val Loss=14.6825, Acc=0.6364
+Epoch 11/50: Train Loss=0.9903, Acc=0.7645 | Val Loss=14.3423, Acc=0.6364
+Epoch 12/50: Train Loss=1.7502, Acc=0.7713 | Val Loss=12.4092, Acc=0.6364
+Epoch 13/50: Train Loss=1.0473, Acc=0.7747 | Val Loss=8.9243, Acc=0.6364
+Epoch 14/50: Train Loss=1.3502, Acc=0.7884 | Val Loss=7.2726, Acc=0.6364
+Epoch 15/50: Train Loss=1.3067, Acc=0.7713 | Val Loss=5.7897, Acc=0.6364
+Epoch 16/50: Train Loss=0.7846, Acc=0.7816 | Val Loss=4.5423, Acc=0.6364
+Epoch 17/50: Train Loss=3.7612, Acc=0.7611 | Val Loss=9.1468, Acc=0.6364
+Epoch 18/50: Train Loss=1.0515, Acc=0.7816 | Val Loss=8.4796, Acc=0.6364
+Epoch 19/50: Train Loss=1.7264, Acc=0.7816 | Val Loss=8.1510, Acc=0.6364
+Epoch 20/50: Train Loss=0.5693, Acc=0.7850 | Val Loss=5.4447, Acc=0.6364
+Epoch 21/50: Train Loss=0.8608, Acc=0.7850 | Val Loss=4.8743, Acc=0.6364
+Epoch 22/50: Train Loss=1.2633, Acc=0.7679 | Val Loss=4.8714, Acc=0.6364
+Epoch 23/50: Train Loss=0.5415, Acc=0.7884 | Val Loss=4.9215, Acc=0.6364
+Epoch 24/50: Train Loss=1.7359, Acc=0.7816 | Val Loss=5.3547, Acc=0.6364
+Epoch 25/50: Train Loss=0.8108, Acc=0.7850 | Val Loss=4.7401, Acc=0.6364
+Epoch 26/50: Train Loss=1.6591, Acc=0.7782 | Val Loss=8.7915, Acc=0.6364
+Epoch 27/50: Train Loss=1.5023, Acc=0.7850 | Val Loss=7.9198, Acc=0.6364
+Epoch 28/50: Train Loss=0.6388, Acc=0.7850 | Val Loss=7.4456, Acc=0.6364
+Epoch 29/50: Train Loss=1.0407, Acc=0.7850 | Val Loss=6.6298, Acc=0.6364
+Epoch 30/50: Train Loss=0.8689, Acc=0.7850 | Val Loss=5.9917, Acc=0.6364
+Epoch 31/50: Train Loss=1.0715, Acc=0.7850 | Val Loss=5.3511, Acc=0.6364
+Epoch 32/50: Train Loss=0.8690, Acc=0.7816 | Val Loss=5.1519, Acc=0.6364
+Epoch 33/50: Train Loss=0.7979, Acc=0.7850 | Val Loss=4.4899, Acc=0.6364
+Epoch 34/50: Train Loss=1.0658, Acc=0.7850 | Val Loss=4.0067, Acc=0.6364
+Epoch 35/50: Train Loss=1.6544, Acc=0.7816 | Val Loss=4.5660, Acc=0.6364
+Epoch 36/50: Train Loss=1.0160, Acc=0.7850 | Val Loss=4.1060, Acc=0.6364
+Epoch 37/50: Train Loss=0.7766, Acc=0.7816 | Val Loss=4.7162, Acc=0.6364
+Epoch 38/50: Train Loss=0.6470, Acc=0.7816 | Val Loss=4.1294, Acc=0.6364
+Epoch 39/50: Train Loss=2.3744, Acc=0.7816 | Val Loss=6.1143, Acc=0.6364
+Epoch 40/50: Train Loss=0.9307, Acc=0.7850 | Val Loss=5.5342, Acc=0.6364
+Epoch 41/50: Train Loss=0.7360, Acc=0.7850 | Val Loss=5.2862, Acc=0.6364
+Epoch 42/50: Train Loss=0.8278, Acc=0.7850 | Val Loss=4.8325, Acc=0.6364
+Epoch 43/50: Train Loss=0.8445, Acc=0.7850 | Val Loss=3.8447, Acc=0.6364
+Epoch 44/50: Train Loss=0.6363, Acc=0.7850 | Val Loss=3.2113, Acc=0.6364
+Epoch 45/50: Train Loss=0.7001, Acc=0.7850 | Val Loss=2.6120, Acc=0.6364
+Epoch 46/50: Train Loss=0.4953, Acc=0.7884 | Val Loss=2.9799, Acc=0.6364
+Epoch 47/50: Train Loss=0.5377, Acc=0.7850 | Val Loss=2.3542, Acc=0.6364
+Epoch 48/50: Train Loss=0.6886, Acc=0.7816 | Val Loss=3.2091, Acc=0.6364
+Epoch 49/50: Train Loss=0.7347, Acc=0.7816 | Val Loss=3.8235, Acc=0.6364
+Epoch 50/50: Train Loss=0.5321, Acc=0.7850 | Val Loss=3.6505, Acc=0.6364
+
+--- Final Training Complete ---
+Best Val Acc (0.6591) at epoch 1
+
+--- Evaluating Best Saved Model ---
+Final Best Model Val Acc: 0.6591
+Classification Report:
+{
+  "0": {
+    "precision": 0.6511627906976745,
+    "recall": 1.0,
+    "f1-score": 0.7887323943661971,
+    "support": 28.0
+  },
+  "1": {
+    "precision": 1.0,
+    "recall": 0.0625,
+    "f1-score": 0.11764705882352941,
+    "support": 16.0
+  },
+  "accuracy": 0.6590909090909091,
+  "macro avg": {
+    "precision": 0.8255813953488372,
+    "recall": 0.53125,
+    "f1-score": 0.4531897265948633,
+    "support": 44.0
+  },
+  "weighted avg": {
+    "precision": 0.7780126849894292,
+    "recall": 0.6590909090909091,
+    "f1-score": 0.5447013632597725,
+    "support": 44.0
+  }
+}
