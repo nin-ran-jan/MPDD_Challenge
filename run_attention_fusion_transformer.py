@@ -317,11 +317,11 @@ if __name__ == '__main__':
     print("--- Defining Experiment Parameters (Attention Fusion) ---")
 
     # --- Paths ---
-    DATA_ROOT_PATH = "/Users/kaushaldamania/deepl/MPDD-Elderly"
+    DATA_ROOT_PATH = "./data"
     MODEL_SAVE_PATH = './best_attn_fusion_transformer.pth' # New name
 
     # --- Data & Feature Settings ---
-    WINDOW_SPLIT_TIME = 5
+    WINDOW_SPLIT_TIME = 1
     AUDIO_FEATURE_METHOD = "wav2vec"
     VIDEO_FEATURE_METHOD = "openface"
     FEATURE_MAX_LEN = 26 # Max length of INPUT sequence (before modality CLS token)

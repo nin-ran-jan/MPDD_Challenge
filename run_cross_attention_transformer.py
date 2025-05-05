@@ -394,7 +394,7 @@ if __name__ == '__main__':
     MODEL_SAVE_PATH = './best_cross_modal_transformer_v1.pth' # New name
 
     # --- Data & Feature Settings ---
-    WINDOW_SPLIT_TIME = 5
+    WINDOW_SPLIT_TIME = 1
     AUDIO_FEATURE_METHOD = "wav2vec"  # Match directory name
     VIDEO_FEATURE_METHOD = "openface" # Match directory name
     FEATURE_MAX_LEN = 26              # Max length of INPUT sequence (before modality CLS token)

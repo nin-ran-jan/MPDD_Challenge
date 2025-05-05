@@ -1,4 +1,12 @@
-# Config explanation
+# How to run it
+## Files with everything in a everythin in a script (no imports)
+- run_transformer_inter_fusion (For inter fusion transformer with Regularization)
+```
+python run_transformer_inter_fusion.py
+```
+- 
+
+# Config explanation (not necesarry to understand)
 
 -  data_root_path: path to your data directory (Elderly or Young)
 -  window_split_time: 1 
